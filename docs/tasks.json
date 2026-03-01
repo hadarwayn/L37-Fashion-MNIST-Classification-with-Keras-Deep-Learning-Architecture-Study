@@ -1,0 +1,1076 @@
+{
+  "project_name": "L37 – Fashion-MNIST Deep Learning Architecture Study",
+  "version": "1.0",
+  "created": "2026-02-28",
+  "prd_version": "3.0",
+  "total_estimated_hours": 42,
+  "execution_modes": ["Google Colab Notebook", "Local (main.py + src/)"],
+  "phases": [
+    {
+      "phase": "1_project_setup",
+      "description": "Create the full project directory structure, configuration files, and development environment. This is the foundation everything else builds on.",
+      "estimated_hours": 2,
+      "tasks": [
+        {
+          "id": "1.1",
+          "name": "Create root directory structure",
+          "priority": "critical",
+          "estimated_hours": 0.5,
+          "dependencies": [],
+          "description": "Create every folder and placeholder file defined in PRD Section 8.2. This includes root files, src/ tree, docs/, results/, logs/, config/, notebooks/, and venv/ with .gitkeep.",
+          "files_to_create": [
+            "README.md",
+            "main.py",
+            "requirements.txt",
+            ".gitignore",
+            ".env.example",
+            "venv/.gitkeep",
+            "notebooks/.gitkeep",
+            "src/__init__.py",
+            "src/models/__init__.py",
+            "src/training/__init__.py",
+            "src/visualization/__init__.py",
+            "src/utils/__init__.py",
+            "docs/PRD.md",
+            "docs/tasks.json",
+            "results/graphs/.gitkeep",
+            "results/tables/.gitkeep",
+            "results/examples/.gitkeep",
+            "logs/.gitkeep",
+            "logs/config/log_config.json",
+            "config/training_config.yaml"
+          ],
+          "acceptance_criteria": [
+            "All folders exist with __init__.py where needed",
+            "venv/.gitkeep contains UV setup instructions",
+            "Folder structure matches PRD Section 8.2 exactly"
+          ]
+        },
+        {
+          "id": "1.2",
+          "name": "Create .gitignore",
+          "priority": "critical",
+          "estimated_hours": 0.1,
+          "dependencies": ["1.1"],
+          "description": "Create comprehensive .gitignore that protects secrets, excludes .venv/, __pycache__/, IDE files, .ipynb_checkpoints/, large result temp files, and log files (but keeps logs/config/).",
+          "files_to_create": [".gitignore"],
+          "acceptance_criteria": [
+            ".env excluded",
+            ".venv/ excluded",
+            "__pycache__/ excluded",
+            "logs/*.log excluded but logs/config/ kept",
+            "venv/.gitkeep IS tracked (not excluded)",
+            ".ipynb_checkpoints/ excluded"
+          ]
+        },
+        {
+          "id": "1.3",
+          "name": "Create requirements.txt with exact versions",
+          "priority": "critical",
+          "estimated_hours": 0.1,
+          "dependencies": ["1.1"],
+          "description": "List all Python dependencies with pinned versions. Must include: tensorflow, numpy, matplotlib, seaborn, scikit-learn, pyyaml, python-dotenv. Versions must be tested and confirmed working together.",
+          "files_to_create": ["requirements.txt"],
+          "acceptance_criteria": [
+            "Every package has ==exact.version.number",
+            "tensorflow>=2.15.0 listed",
+            "numpy, matplotlib, seaborn, scikit-learn included",
+            "pyyaml included for config loading",
+            "All versions are mutually compatible"
+          ]
+        },
+        {
+          "id": "1.4",
+          "name": "Create training configuration file",
+          "priority": "high",
+          "estimated_hours": 0.3,
+          "dependencies": ["1.1"],
+          "description": "Create config/training_config.yaml with all hyperparameters for all 10 models. Includes epochs, batch_size, optimizer, learning_rate, early_stopping settings, and per-model architecture specs. Named constants — no magic numbers in code.",
+          "files_to_create": ["config/training_config.yaml"],
+          "acceptance_criteria": [
+            "All 10 model configurations defined",
+            "Default hyperparameters: epochs=20, batch_size=64, optimizer=adam, lr=0.001",
+            "Early stopping: patience=5, monitor=val_loss",
+            "Per-model overrides where needed (e.g., epochs=50 for deep models)",
+            "L2 lambda values defined: 0.001, 0.01, 0.1",
+            "All values have inline YAML comments explaining why"
+          ]
+        },
+        {
+          "id": "1.5",
+          "name": "Create log configuration",
+          "priority": "medium",
+          "estimated_hours": 0.2,
+          "dependencies": ["1.1"],
+          "description": "Create logs/config/log_config.json with ring buffer settings per course guidelines. Max 1000 lines per file, max 5 log files.",
+          "files_to_create": ["logs/config/log_config.json"],
+          "acceptance_criteria": [
+            "Ring buffer configured: max_lines=1000, max_files=5",
+            "Log format includes timestamp, level, module name, message",
+            "Status display settings configured"
+          ]
+        },
+        {
+          "id": "1.6",
+          "name": "Create utility modules: paths.py, logger.py, hardware.py",
+          "priority": "critical",
+          "estimated_hours": 0.8,
+          "dependencies": ["1.1", "1.5"],
+          "description": "Create three utility modules: (1) paths.py — relative path resolution using pathlib.Path for project root, data, results, logs, config directories. (2) logger.py — ring buffer logging system per course guidelines. (3) hardware.py — detect and report GPU/CPU, TensorFlow version, RAM, device name. Each file MUST be under 150 lines.",
+          "files_to_create": [
+            "src/utils/paths.py",
+            "src/utils/logger.py",
+            "src/utils/hardware.py"
+          ],
+          "acceptance_criteria": [
+            "paths.py uses Path(__file__) for relative resolution — NO absolute paths",
+            "paths.py provides get_project_root(), get_results_dir(), get_logs_dir(), get_config_path()",
+            "logger.py implements RingBufferHandler with configurable max_lines and max_files",
+            "logger.py provides setup_logger() and print_log_status()",
+            "hardware.py detects GPU vs CPU, prints TensorFlow version, GPU name, available RAM",
+            "hardware.py works gracefully on both Colab (GPU) and local (possibly CPU-only)",
+            "All three files under 150 lines each",
+            "All functions have type hints and docstrings with 12-year-old-friendly comments"
+          ]
+        }
+      ]
+    },
+    {
+      "phase": "2_data_pipeline",
+      "description": "Load Fashion-MNIST from Keras, explore the data, verify class balance, preprocess (normalize + reshape), and split into train/validation/test. This phase produces the first visualizations.",
+      "estimated_hours": 2.5,
+      "tasks": [
+        {
+          "id": "2.1",
+          "name": "Implement data_loader.py — load and preprocess Fashion-MNIST",
+          "priority": "critical",
+          "estimated_hours": 1,
+          "dependencies": ["1.6"],
+          "description": "Create src/data_loader.py that: (1) Loads Fashion-MNIST from keras.datasets.fashion_mnist. (2) Prints dataset shapes. (3) Normalizes pixel values 0–255 → 0.0–1.0. (4) Splits Keras train (60K) into train (50K) + validation (10K). (5) Reshapes images for CNN (adds channel dimension: 28×28 → 28×28×1). (6) Provides one-hot encoded labels for categorical crossentropy. (7) Returns all splits as a named dictionary. (8) Sets random seed=42 for reproducibility.",
+          "files_to_create": ["src/data_loader.py"],
+          "acceptance_criteria": [
+            "Function load_fashion_mnist() returns dict with x_train, y_train, x_val, y_val, x_test, y_test",
+            "Also returns x_train_flat (for FC models) and y_train_onehot (for categorical CE)",
+            "Shapes: train=50000, val=10000, test=10000",
+            "Pixel values in range [0.0, 1.0]",
+            "CNN inputs shaped (N, 28, 28, 1)",
+            "FC inputs shaped (N, 784) or uses Flatten layer",
+            "Random seed set for reproducible split",
+            "CLASS_NAMES list defined: ['T-shirt/top', 'Trouser', 'Pullover', ...]",
+            "File under 150 lines",
+            "All functions have type hints and docstrings"
+          ]
+        },
+        {
+          "id": "2.2",
+          "name": "Implement class distribution verification",
+          "priority": "critical",
+          "estimated_hours": 0.5,
+          "dependencies": ["2.1"],
+          "description": "Add function to data_loader.py (or visualization module) that counts samples per class for train/val/test splits and prints a summary table. MANDATORY before any training — must verify roughly equal distribution (~5000–6000 per class in train). Flag any significant imbalance with a warning.",
+          "files_to_create": [],
+          "acceptance_criteria": [
+            "Function print_class_distribution() shows counts per class per split",
+            "Prints percentage distribution",
+            "Warns if any class has <4000 or >7000 samples in training set",
+            "Output is clean, tabular, and readable"
+          ]
+        },
+        {
+          "id": "2.3",
+          "name": "Generate VIZ-1: Sample images grid (all 10 classes)",
+          "priority": "high",
+          "estimated_hours": 0.5,
+          "dependencies": ["2.1"],
+          "description": "Create a visualization showing 2–3 example images from each of the 10 classes in a grid layout. Each image labeled with its class name. Grid should be approximately 10 columns × 3 rows or 5 columns × 6 rows. Save as results/graphs/sample_images_grid.png. This is one of the first visuals in the README.",
+          "files_to_create": ["src/visualization/training_plots.py"],
+          "acceptance_criteria": [
+            "Grid shows at least 2 images per class (20+ images total)",
+            "Each image has its class name as title/label",
+            "Images displayed in grayscale",
+            "Figure size is large enough to see details",
+            "Saved as high-quality PNG (dpi=300)",
+            "Saved to results/graphs/sample_images_grid.png"
+          ]
+        },
+        {
+          "id": "2.4",
+          "name": "Generate VIZ-2: Class distribution bar chart",
+          "priority": "high",
+          "estimated_hours": 0.5,
+          "dependencies": ["2.2"],
+          "description": "Create a bar chart showing the number of images per class in the training set. Each bar labeled with the class name and count. Use distinct colors. Save as results/graphs/class_distribution.png. Must include title, axis labels, and count annotations on each bar.",
+          "files_to_create": [],
+          "acceptance_criteria": [
+            "Bar chart with 10 bars (one per class)",
+            "Class names on x-axis, count on y-axis",
+            "Count value displayed on top of each bar",
+            "Title: 'Fashion-MNIST Training Set — Class Distribution'",
+            "Saved to results/graphs/class_distribution.png at dpi=300",
+            "Grid lines for readability"
+          ]
+        }
+      ]
+    },
+    {
+      "phase": "3_model_architectures",
+      "description": "Implement all 10 neural network architectures as Keras model-building functions. Organized into 4 groups matching PRD Section 5. Each function takes no arguments (or optional config) and returns a compiled Keras model.",
+      "estimated_hours": 6,
+      "tasks": [
+        {
+          "id": "3.1",
+          "name": "Implement Group A: fc_models.py — Models 1, 2, 3 (Fully Connected)",
+          "priority": "critical",
+          "estimated_hours": 1.5,
+          "dependencies": ["1.1"],
+          "description": "Create src/models/fc_models.py with three model-building functions. Each returns a compiled Keras Sequential model. (1) build_fc_baseline(): Flatten → Dense(128, ReLU) → Dense(10, Softmax). Our simplest starting point — control group. (2) build_narrow_deep_fc(): Flatten → Dense(64, ReLU) → Dense(64, ReLU) → Dense(64, ReLU) → Dense(10, Softmax). Tests if depth helps FC networks. (3) build_wide_shallow_fc(): Flatten → Dense(512, ReLU) → Dense(10, Softmax). Tests if brute-force width compensates for lack of convolutions.",
+          "files_to_create": ["src/models/fc_models.py"],
+          "acceptance_criteria": [
+            "build_fc_baseline() returns compiled model with ~101K parameters",
+            "build_narrow_deep_fc() returns compiled model with ~57K parameters",
+            "build_wide_shallow_fc() returns compiled model with ~406K parameters",
+            "All models accept input_shape=(28, 28) for FC (will use Flatten)",
+            "All compiled with optimizer='adam', loss as parameter, metrics=['accuracy']",
+            "Loss function is a parameter (not hardcoded) to support loss comparison experiments",
+            "Each function has docstring explaining WHAT, WHY, real-world analogy, expected accuracy",
+            "Named constants for layer sizes (no magic numbers)",
+            "File under 150 lines"
+          ]
+        },
+        {
+          "id": "3.2",
+          "name": "Implement Group B: cnn_models.py — Models 4, 5, 6, 7 (CNN variants)",
+          "priority": "critical",
+          "estimated_hours": 2.5,
+          "dependencies": ["1.1"],
+          "description": "Create src/models/cnn_models.py with four model-building functions. NOTE: If this file exceeds 150 lines, split into cnn_basic.py (Models 4, 7) and cnn_deep.py (Models 5, 6). (4) build_baseline_cnn(): Conv2D(32,3×3) → MaxPool → Conv2D(64,3×3) → MaxPool → Flatten → Dense(128) → Dense(10). Standard CNN recipe. (5) build_deep_cnn(): 4 Conv blocks (32→64→128→256 filters), each block = Conv2D → Conv2D → MaxPool, then Dense layers. Tests deep stacking. (6) build_very_deep_cnn(): 5+ Conv blocks (32→64→128→256→512), same-padding to preserve dimensions. Pushes depth to extreme — may show vanishing gradients. (7) build_wide_cnn(): Conv2D(128,3×3) → MaxPool → Conv2D(256,3×3) → MaxPool → Flatten → Dense(256) → Dense(10). Fewer layers but many more filters.",
+          "files_to_create": ["src/models/cnn_models.py"],
+          "acceptance_criteria": [
+            "build_baseline_cnn() returns compiled model with ~200K parameters",
+            "build_deep_cnn() returns compiled model with ~800K parameters",
+            "build_very_deep_cnn() returns compiled model with ~1.5M parameters",
+            "build_wide_cnn() returns compiled model with ~1M parameters",
+            "All models accept input_shape=(28, 28, 1) for CNN",
+            "Loss function is a parameter",
+            "Model 6 uses padding='same' to prevent dimension collapse",
+            "Each function has docstring with WHAT, WHY, analogy, expected accuracy",
+            "If file exceeds 150 lines: split into cnn_basic.py + cnn_deep.py",
+            "Named constants for filter counts and kernel sizes"
+          ]
+        },
+        {
+          "id": "3.3",
+          "name": "Implement Group C: regularized_models.py — Models 8, 9 (Dropout, BatchNorm)",
+          "priority": "critical",
+          "estimated_hours": 1,
+          "dependencies": ["3.2"],
+          "description": "Create src/models/regularized_models.py with two model-building functions. Both are based on Model 4 (Baseline CNN) architecture to isolate the effect of the regularization technique. (8) build_cnn_dropout(): Same as Model 4 but adds Dropout(0.25) after each Conv+MaxPool block and Dropout(0.5) before final Dense. Tests overfitting prevention. (9) build_cnn_batchnorm(): Same as Model 4 but adds BatchNormalization() after every Conv2D and Dense layer (before activation). Tests training speed improvement.",
+          "files_to_create": ["src/models/regularized_models.py"],
+          "acceptance_criteria": [
+            "build_cnn_dropout() is identical to Model 4 PLUS Dropout layers",
+            "Dropout rates: 0.25 after conv blocks, 0.5 before output",
+            "build_cnn_batchnorm() is identical to Model 4 PLUS BatchNormalization",
+            "BatchNorm placed after Conv2D/Dense, before activation",
+            "Both accept loss function as parameter",
+            "Docstrings explain the specific regularization technique with analogy",
+            "Parameter count noted: ~200K for Dropout (same as Model 4), ~201K for BatchNorm (slightly more due to BN params)",
+            "File under 150 lines"
+          ]
+        },
+        {
+          "id": "3.4",
+          "name": "Implement Group D: advanced_models.py — Model 10 (Skip Connections)",
+          "priority": "critical",
+          "estimated_hours": 1,
+          "dependencies": ["3.2"],
+          "description": "Create src/models/advanced_models.py with one model-building function. (10) build_cnn_skip(): Based on Model 5 (Deep CNN) but with residual-style shortcut connections using Keras Functional API (not Sequential). Each skip block: input → Conv2D → Conv2D → Add(input, output). Must handle dimension mismatches with 1×1 Conv2D projection shortcuts. This is a mini-ResNet.",
+          "files_to_create": ["src/models/advanced_models.py"],
+          "acceptance_criteria": [
+            "Uses Keras Functional API (Model class, not Sequential)",
+            "At least 2 residual blocks with skip connections",
+            "Skip connections use Add() layer",
+            "1×1 Conv2D projection when input/output dimensions differ",
+            "Returns compiled model with ~850K parameters",
+            "Docstring explains ResNet concept, skip connections, vanishing gradient solution",
+            "Real-world analogy: elevator + stairs in a building",
+            "File under 150 lines"
+          ]
+        },
+        {
+          "id": "3.5",
+          "name": "Create models/__init__.py with unified model registry",
+          "priority": "high",
+          "estimated_hours": 0.5,
+          "dependencies": ["3.1", "3.2", "3.3", "3.4"],
+          "description": "Create src/models/__init__.py that imports all 10 build functions and exposes a MODEL_REGISTRY dictionary mapping model number/name to its build function. This allows main.py to iterate over models by ID. Also include MODEL_INFO dict with metadata: name, group, type (FC/CNN), expected accuracy, description, unique question it answers.",
+          "files_to_create": ["src/models/__init__.py"],
+          "acceptance_criteria": [
+            "MODEL_REGISTRY = {1: build_fc_baseline, 2: build_narrow_deep_fc, ..., 10: build_cnn_skip}",
+            "MODEL_INFO has metadata for all 10 models matching PRD Section 10.2",
+            "get_model(model_id, loss_fn) function returns compiled model",
+            "get_all_model_ids() returns [1, 2, ..., 10]",
+            "Imports work correctly from both main.py and notebook"
+          ]
+        }
+      ]
+    },
+    {
+      "phase": "4_training_pipeline",
+      "description": "Build the unified training and evaluation pipeline that can train any model, record metrics, measure time, and produce evaluation results. Also implement custom loss functions.",
+      "estimated_hours": 4,
+      "tasks": [
+        {
+          "id": "4.1",
+          "name": "Implement loss_functions.py — standard + custom L2-regularized loss",
+          "priority": "critical",
+          "estimated_hours": 1,
+          "dependencies": ["1.1"],
+          "description": "Create src/training/loss_functions.py with: (1) get_sparse_categorical_crossentropy() — returns standard Keras sparse CE loss. (2) get_categorical_crossentropy() — returns standard Keras categorical CE loss. (3) L2RegularizedLoss class — custom Keras loss that adds L2 penalty: Total = CE_loss + lambda * sum(weights²). Lambda is configurable. (4) Optional: get_class_weighted_loss() — weighted CE where harder classes (Shirt) get higher weight. Each loss function documented with plain-English explanation and basketball team analogy for L2.",
+          "files_to_create": ["src/training/loss_functions.py"],
+          "acceptance_criteria": [
+            "Sparse CE and Categorical CE wrappers work with Keras compile()",
+            "L2RegularizedLoss extends tf.keras.losses.Loss (or equivalent)",
+            "Lambda is configurable (default=0.01)",
+            "L2 loss tested with lambda values: 0.001, 0.01, 0.1",
+            "All loss functions have docstrings with 12-year-old-friendly explanations",
+            "Basketball team analogy included for L2 regularization",
+            "File under 150 lines"
+          ]
+        },
+        {
+          "id": "4.2",
+          "name": "Implement trainer.py — unified train-and-evaluate pipeline",
+          "priority": "critical",
+          "estimated_hours": 2,
+          "dependencies": ["3.5", "4.1", "2.1"],
+          "description": "Create src/training/trainer.py with a unified training pipeline: (1) train_model(model, data, config) — trains one model with EarlyStopping + ModelCheckpoint callbacks, measures wall-clock time, returns history + metrics dict. (2) evaluate_model(model, x_test, y_test) — evaluates on test set, returns accuracy, loss, predictions, confusion matrix. (3) train_all_models(model_ids, data, config) — loops through selected model IDs, trains each, collects all results into a list of dicts. (4) Results dict must include: model_id, model_name, train_acc, val_acc, test_acc, train_loss, val_loss, test_loss, training_time_seconds, epochs_trained, best_epoch, total_params, predictions, confusion_matrix.",
+          "files_to_create": ["src/training/trainer.py"],
+          "acceptance_criteria": [
+            "train_model() uses EarlyStopping(patience=5, monitor='val_loss', restore_best_weights=True)",
+            "train_model() records wall-clock training time with time.time()",
+            "train_model() returns Keras history object + metrics dict",
+            "evaluate_model() returns accuracy, loss, y_pred, confusion_matrix from sklearn",
+            "train_all_models() can accept a subset of model IDs (e.g., [1, 4, 8])",
+            "All results stored in a standardized dict format for easy comparison",
+            "Progress printed to console: 'Training Model 3/10: Wide Shallow FC...'",
+            "Logger integration: logs start/end of each model training",
+            "Handles errors gracefully: if one model fails, log error and continue to next",
+            "File under 150 lines (split into trainer.py + evaluator.py if needed)"
+          ]
+        },
+        {
+          "id": "4.3",
+          "name": "Implement results saving — CSV export and JSON metrics",
+          "priority": "high",
+          "estimated_hours": 0.5,
+          "dependencies": ["4.2"],
+          "description": "Add function save_results_summary(all_results, output_dir) that: (1) Saves a CSV with one row per model to results/tables/results_summary.csv. (2) Columns: model_id, model_name, group, type, test_accuracy, test_loss, training_time, epochs_trained, total_params. (3) Also saves per-model JSON with detailed metrics to results/tables/model_XX_metrics.json.",
+          "files_to_create": [],
+          "acceptance_criteria": [
+            "CSV is clean, importable by pandas/Excel",
+            "All 10 models represented in the CSV",
+            "JSON files contain full history (per-epoch accuracy and loss)",
+            "Files saved to results/tables/",
+            "Function prints confirmation message with file path"
+          ]
+        },
+        {
+          "id": "4.4",
+          "name": "Implement loss function comparison experiment",
+          "priority": "high",
+          "estimated_hours": 0.5,
+          "dependencies": ["4.2", "4.1"],
+          "description": "Create a function run_loss_comparison(data, config) that trains Model 4 (Baseline CNN) with three different loss functions: (1) Sparse Categorical Crossentropy, (2) Categorical Crossentropy, (3) Custom L2-Regularized Loss (with lambda=0.01). Returns comparison results dict for visualization. Also tests L2 with lambda values 0.001, 0.01, 0.1.",
+          "files_to_create": [],
+          "acceptance_criteria": [
+            "Same architecture (Model 4) trained 3+ times with different losses",
+            "Results include: final accuracy, convergence speed (epoch to reach 85%), loss curve",
+            "L2 lambda comparison: 0.001, 0.01, 0.1 all tested",
+            "Results stored in same format as regular model results for easy plotting"
+          ]
+        }
+      ]
+    },
+    {
+      "phase": "5_visualization",
+      "description": "Build all visualization functions and generate every plot required by the PRD. This phase produces the ~30 PNG images needed for the README. All plots must be publication-quality with clear labels, titles, annotations, and saved at dpi=300.",
+      "estimated_hours": 6,
+      "tasks": [
+        {
+          "id": "5.1",
+          "name": "Implement training_plots.py — accuracy and loss curves per model",
+          "priority": "critical",
+          "estimated_hours": 1.5,
+          "dependencies": ["4.2"],
+          "description": "Create src/visualization/training_plots.py with: (1) plot_training_curves(history, model_name, output_path) — creates a 1×2 figure with accuracy-vs-epoch (left) and loss-vs-epoch (right). Both train and validation curves shown. Annotations for best epoch. (2) plot_all_training_curves(all_histories, output_dir) — generates curves for all 10 models, saving each as model_XX_SHORTNAME_curves.png. This produces 10 PNG files (VIZ-3 and VIZ-4 from PRD).",
+          "files_to_create": ["src/visualization/training_plots.py"],
+          "acceptance_criteria": [
+            "Each plot shows train + validation lines with different colors",
+            "Legend clearly labels 'Training' vs 'Validation'",
+            "Best epoch annotated with a marker or vertical line",
+            "Grid lines for readability",
+            "Title includes model name and final accuracy",
+            "Saved as PNG at dpi=300 to results/graphs/",
+            "Naming convention: model_01_fc_baseline_curves.png through model_10_cnn_skip_curves.png",
+            "File under 150 lines"
+          ]
+        },
+        {
+          "id": "5.2",
+          "name": "Implement confusion_matrix.py — heatmap per model",
+          "priority": "critical",
+          "estimated_hours": 1,
+          "dependencies": ["4.2"],
+          "description": "Create src/visualization/confusion_matrix.py with: (1) plot_confusion_matrix(y_true, y_pred, class_names, model_name, output_path) — creates a seaborn heatmap with counts and percentages. Color-coded so high values on diagonal are green, off-diagonal errors are red/orange. (2) Generate for at minimum the best model and worst model. Ideally generate for all 10.",
+          "files_to_create": ["src/visualization/confusion_matrix.py"],
+          "acceptance_criteria": [
+            "Uses seaborn heatmap with annotated cell values",
+            "Axis labels show class names (not just numbers 0–9)",
+            "Color map highlights diagonal (correct) vs off-diagonal (errors)",
+            "Title includes model name and overall accuracy",
+            "Saved as PNG at dpi=300",
+            "Naming: model_XX_SHORTNAME_confusion.png",
+            "At minimum: best model + worst model confusion matrices generated",
+            "File under 150 lines"
+          ]
+        },
+        {
+          "id": "5.3",
+          "name": "Implement comparison_charts.py — grand comparison visualizations",
+          "priority": "critical",
+          "estimated_hours": 2,
+          "dependencies": ["4.3"],
+          "description": "Create src/visualization/comparison_charts.py with multiple comparison functions: (1) plot_grand_accuracy_comparison(all_results) — horizontal bar chart of all 10 models' test accuracy, sorted best-to-worst, color-coded by group (FC=blue, CNN=green, Regularized=orange, Advanced=red). THE hero chart. (2) plot_grand_time_comparison(all_results) — bar chart of training time per model. (3) plot_fc_vs_cnn(all_results) — grouped bar chart comparing FC models (1–3) vs CNN models (4–10). (4) plot_loss_function_comparison(loss_comparison_results) — overlay accuracy curves of same model with different loss functions. (5) plot_lambda_comparison(lambda_results) — effect of different L2 lambda values. (6) plot_group_summaries(all_results, group) — comparison within each group (A, B, C, D).",
+          "files_to_create": ["src/visualization/comparison_charts.py"],
+          "acceptance_criteria": [
+            "Grand accuracy bar chart: sorted, color-coded by group, accuracy values annotated",
+            "Grand time chart: shows seconds or minutes per model",
+            "FC vs CNN chart: clear visual separation with group means",
+            "Loss function comparison: 3 curves on one plot with legend",
+            "Lambda comparison: 3 curves (λ=0.001, 0.01, 0.1) on one plot",
+            "Group summaries: one comparison chart per group (4 total)",
+            "All saved to results/graphs/ at dpi=300",
+            "File under 150 lines — split if needed into comparison_accuracy.py + comparison_other.py"
+          ]
+        },
+        {
+          "id": "5.4",
+          "name": "Implement misclassified examples visualization",
+          "priority": "high",
+          "estimated_hours": 0.5,
+          "dependencies": ["4.2"],
+          "description": "Create a function show_misclassified(model, x_test, y_test, class_names, model_name, output_path, n=20) that: finds images the model predicted wrong, displays them in a grid with 'True: Shirt → Predicted: T-shirt' labels, saves to results/examples/. Generate for best model and worst model.",
+          "files_to_create": [],
+          "acceptance_criteria": [
+            "Grid of ~20 misclassified images",
+            "Each image labeled with TRUE class and PREDICTED class",
+            "Wrong predictions highlighted (red text or border)",
+            "Generated for both best and worst models",
+            "Saved to results/examples/misclassified_best_model.png and misclassified_worst_model.png"
+          ]
+        },
+        {
+          "id": "5.5",
+          "name": "Generate educational diagrams for README",
+          "priority": "high",
+          "estimated_hours": 1,
+          "dependencies": ["2.1"],
+          "description": "Create diagrams for the README educational sections: (1) Neural network basics diagram — neuron with inputs, weights, sum, activation, output. (2) FC vs CNN processing comparison — show how FC flattens image vs CNN scans with filters. (3) The 'Shirt Problem' — side-by-side images of T-shirt, Pullover, and Shirt from the dataset showing why they're confusing. (4) Data pipeline diagram — raw image → normalize → reshape → feed to model. These can be matplotlib figures, text art, or Keras plot_model output.",
+          "files_to_create": [],
+          "acceptance_criteria": [
+            "At least 3 educational diagrams generated",
+            "Shirt Problem comparison: 3 images side-by-side (T-shirt, Pullover, Shirt) from actual dataset",
+            "All saved to results/graphs/ as PNG",
+            "Clear enough for a 12-year-old to understand",
+            "Used as embedded images in README"
+          ]
+        }
+      ]
+    },
+    {
+      "phase": "6_local_execution",
+      "description": "Build the main.py entry point for local execution, with CLI arguments, console output, and end-to-end pipeline integration.",
+      "estimated_hours": 3,
+      "tasks": [
+        {
+          "id": "6.1",
+          "name": "Implement main.py — local execution entry point",
+          "priority": "critical",
+          "estimated_hours": 1.5,
+          "dependencies": ["4.2", "5.3"],
+          "description": "Create main.py that orchestrates the full pipeline: (1) Parse CLI arguments: --models (comma-separated IDs or 'all'), --loss (default='sparse_categorical_crossentropy'), --epochs (override), --skip-viz (skip visualization). (2) Setup logging. (3) Print hardware report. (4) Load and preprocess data with class distribution check. (5) Train selected models. (6) Run loss function comparison. (7) Generate all visualizations. (8) Save results CSV. (9) Print final summary table to console. Uses argparse for CLI.",
+          "files_to_create": ["main.py"],
+          "acceptance_criteria": [
+            "python main.py runs ALL 10 models end-to-end",
+            "python main.py --models 1,4,8 trains only selected models",
+            "python main.py --all is equivalent to no argument",
+            "Prints clear progress: step numbers, model names, ETA",
+            "Prints final summary table: all models with accuracy, time, params",
+            "Prints hardware info at start",
+            "Prints log status at end",
+            "All results auto-saved to results/ directory",
+            "Handles Ctrl+C gracefully (saves partial results)",
+            "File under 150 lines (delegates to src/ modules)"
+          ]
+        },
+        {
+          "id": "6.2",
+          "name": "Implement __init__.py exports for all packages",
+          "priority": "high",
+          "estimated_hours": 0.5,
+          "dependencies": ["3.5", "4.2", "5.3", "1.6"],
+          "description": "Finalize all __init__.py files so imports work correctly from main.py: src/__init__.py, src/models/__init__.py, src/training/__init__.py, src/visualization/__init__.py, src/utils/__init__.py. Each exposes the public API with __all__ list.",
+          "files_to_create": [
+            "src/__init__.py",
+            "src/training/__init__.py",
+            "src/visualization/__init__.py"
+          ],
+          "acceptance_criteria": [
+            "from src.models import get_model, MODEL_INFO works",
+            "from src.training import train_model, evaluate_model works",
+            "from src.visualization import plot_training_curves, plot_confusion_matrix works",
+            "from src.utils import setup_logger, get_project_root works",
+            "Each __init__.py has __all__ list",
+            "Each __init__.py has module docstring"
+          ]
+        },
+        {
+          "id": "6.3",
+          "name": "End-to-end local test — verify full pipeline",
+          "priority": "critical",
+          "estimated_hours": 1,
+          "dependencies": ["6.1", "6.2"],
+          "description": "Run the full local pipeline on at least 3 models (e.g., Model 1, 4, 10) to verify everything works end-to-end. Check: data loads correctly, models train, visualizations generate, CSV exports, console output is clean. Fix any bugs found. Then run ALL 10 models and verify complete results.",
+          "files_to_create": [],
+          "acceptance_criteria": [
+            "python main.py --models 1,4,10 completes without errors",
+            "python main.py (all models) completes without errors",
+            "All PNG files generated in results/graphs/",
+            "results_summary.csv generated in results/tables/",
+            "Console output is clean, informative, and readable",
+            "No import errors, no path errors, no dimension mismatches",
+            "Training times are reasonable (< 30 min total on GPU)"
+          ]
+        }
+      ]
+    },
+    {
+      "phase": "7_colab_notebook",
+      "description": "Create the richly descriptive Google Colab notebook — the SHOWCASE version with extensive Markdown explanations, inline plots, teaching content, analogies, and interactive exploration between every code cell.",
+      "estimated_hours": 8,
+      "tasks": [
+        {
+          "id": "7.1",
+          "name": "Notebook Section 0: Setup & Hardware Check",
+          "priority": "critical",
+          "estimated_hours": 0.5,
+          "dependencies": ["6.3"],
+          "description": "Create the opening section of the Colab notebook with: (1) Title Markdown cell with project name, description, and 'Open in Colab' badge. (2) Markdown explaining what we're about to do (plain English overview). (3) Import cell: tensorflow, numpy, matplotlib, seaborn, sklearn, time. (4) Random seed setting (42) with explanation of WHY reproducibility matters. (5) Hardware detection cell: GPU type, RAM, TF version. (6) Markdown cell interpreting the hardware results for beginners.",
+          "files_to_create": ["notebooks/L37_Fashion_MNIST_Architecture_Study.ipynb"],
+          "acceptance_criteria": [
+            "First cell is Markdown with project title and description",
+            "Imports are clean with version printing",
+            "GPU detected and reported",
+            "Random seed explanation uses coin-flip analogy",
+            "Beginner-friendly Markdown before and after every code cell"
+          ]
+        },
+        {
+          "id": "7.2",
+          "name": "Notebook Section 1: Data Loading & Exploration",
+          "priority": "critical",
+          "estimated_hours": 0.5,
+          "dependencies": ["7.1"],
+          "description": "Notebook cells for: (1) Markdown introducing Fashion-MNIST with the clothing store analogy. (2) Code cell loading dataset. (3) Markdown explaining shapes (what does 28×28 mean?). (4) Code cell displaying sample images grid (inline). (5) Markdown explaining the 10 classes with the 'Shirt Problem'. (6) Code cell showing class distribution bar chart (inline). (7) Markdown interpreting the distribution ('Good news — our data is balanced!').",
+          "files_to_create": [],
+          "acceptance_criteria": [
+            "Sample images grid displayed inline",
+            "Class distribution bar chart displayed inline",
+            "Shirt Problem explained with side-by-side images",
+            "Every code cell has a Markdown cell before it explaining what's next",
+            "Dataset shapes printed and explained in plain English"
+          ]
+        },
+        {
+          "id": "7.3",
+          "name": "Notebook Section 2: Data Preprocessing",
+          "priority": "critical",
+          "estimated_hours": 0.5,
+          "dependencies": ["7.2"],
+          "description": "Notebook cells for: (1) Markdown explaining normalization with the 'temperature conversion' analogy. (2) Code cell normalizing pixels 0–255 → 0–1, showing before/after values. (3) Markdown explaining the train/validation/test split with the 'studying for an exam' analogy. (4) Code cell splitting data. (5) Markdown explaining reshape for CNN (adding channel dimension). (6) Code cell reshaping. (7) Markdown explaining one-hot encoding with a checklist analogy. (8) Code cell creating one-hot labels.",
+          "files_to_create": [],
+          "acceptance_criteria": [
+            "Before/after normalization shown (print actual pixel values)",
+            "Split sizes printed and verified",
+            "Reshape explained: why (28,28) → (28,28,1)?",
+            "One-hot encoding demonstrated: '3' → [0,0,0,1,0,0,0,0,0,0]",
+            "Every technical step has a plain-English analogy"
+          ]
+        },
+        {
+          "id": "7.4",
+          "name": "Notebook Section 3: Helper Functions",
+          "priority": "high",
+          "estimated_hours": 0.5,
+          "dependencies": ["7.3"],
+          "description": "Notebook cells defining reusable helper functions: (1) build_and_train(model, name, data, epochs, loss) — unified training wrapper. (2) plot_history(history, name) — inline accuracy+loss curves. (3) plot_confusion(y_true, y_pred, name) — inline heatmap. (4) show_misclassified(model, name) — grid of wrong predictions. (5) Markdown cell explaining what each function does and why we define them upfront (DRY principle).",
+          "files_to_create": [],
+          "acceptance_criteria": [
+            "All helper functions defined in one section",
+            "Each function documented with docstring",
+            "DRY principle explained to beginners",
+            "Functions match the logic in src/ modules (shared core)"
+          ]
+        },
+        {
+          "id": "7.5",
+          "name": "Notebook Sections 4–7: All 10 Model Experiments",
+          "priority": "critical",
+          "estimated_hours": 3,
+          "dependencies": ["7.4"],
+          "description": "The core of the notebook. For EACH of the 10 models, create this cell sequence: (1) Markdown: Model Card with name, group, architecture, WHY we test it, real-world analogy. (2) Code: Build model, print model.summary(). (3) Markdown: Interpreting the summary (explain parameter count, layer shapes). (4) Code: Train model, show progress. (5) Code: Plot training curves inline. (6) Code: Evaluate on test set, print accuracy/loss. (7) Code: Plot confusion matrix inline. (8) Markdown: 'The Verdict' — did it meet expectations? What did we learn? After each GROUP (A=Models 1–3, B=Models 4–7, C=Models 8–9, D=Model 10), add: Group Summary Markdown with comparison table and key takeaway.",
+          "files_to_create": [],
+          "acceptance_criteria": [
+            "All 10 models trained and evaluated in the notebook",
+            "Each model has 5–7 cells (Markdown + Code alternating)",
+            "model.summary() shown for each",
+            "Training curves plotted inline for each",
+            "Confusion matrix plotted inline for at least best and worst models",
+            "Group summaries after Models 3, 7, 9, and 10",
+            "Real-world analogies for every model",
+            "Training time printed for each model",
+            "Each 'Verdict' section answers the model's unique research question"
+          ]
+        },
+        {
+          "id": "7.6",
+          "name": "Notebook Section 8: Loss Function Comparison",
+          "priority": "high",
+          "estimated_hours": 0.5,
+          "dependencies": ["7.5"],
+          "description": "Notebook cells for: (1) Markdown explaining loss functions with 'grading system' analogy. (2) Code training Model 4 with Sparse CE. (3) Code training Model 4 with Categorical CE. (4) Code training Model 4 with Custom L2 loss (lambda=0.01). (5) Code plotting all 3 loss curves overlaid. (6) Code comparing convergence speed. (7) Code testing different lambda values (0.001, 0.01, 0.1). (8) Markdown: Analysis — which loss function works best and why.",
+          "files_to_create": [],
+          "acceptance_criteria": [
+            "Same model (Model 4) trained with 3 different loss functions",
+            "Side-by-side or overlaid comparison plots",
+            "Lambda comparison (3 values) plotted",
+            "Convergence speed compared (epochs to reach 85%)",
+            "Basketball team analogy for L2 regularization",
+            "Clear conclusion about which loss function is best"
+          ]
+        },
+        {
+          "id": "7.7",
+          "name": "Notebook Sections 9–10: Grand Comparison & Conclusions",
+          "priority": "critical",
+          "estimated_hours": 1.5,
+          "dependencies": ["7.5", "7.6"],
+          "description": "Final notebook sections: (1) Grand accuracy comparison bar chart (all 10 models). (2) Training time comparison bar chart. (3) FC vs CNN definitive chart. (4) Master results table (all 10 models, all metrics). (5) Misclassified examples grid (best + worst models). (6) Best vs Worst analysis. (7) 'The Definitive Answer' — best architecture recommendation with reasoning. (8) 'What I Learned' — 5–10 numbered insights. (9) 'What Surprised Me' section. (10) 'Next Steps' — data augmentation, transfer learning hints.",
+          "files_to_create": [],
+          "acceptance_criteria": [
+            "All comparison charts displayed inline",
+            "Master table with all 10 models formatted as Markdown",
+            "Misclassified examples shown for best and worst models",
+            "Clear best-architecture recommendation with evidence",
+            "5–10 learning insights listed",
+            "'What surprised me most' personal reflection",
+            "Notebook runs top-to-bottom without errors (Restart & Run All)"
+          ]
+        },
+        {
+          "id": "7.8",
+          "name": "Notebook polish: Save all figures to Google Drive + results/",
+          "priority": "high",
+          "estimated_hours": 0.5,
+          "dependencies": ["7.7"],
+          "description": "Add code cells at key points that save all generated plots as PNG files. (1) Add Google Drive mount option at the top (optional — with try/except). (2) Every plot_history, plot_confusion, and comparison chart also saves to a local 'results/graphs/' folder. (3) Final cell that lists all saved files and their sizes. This ensures all PNGs are available for the README even if the Colab session ends.",
+          "files_to_create": [],
+          "acceptance_criteria": [
+            "Google Drive mount with try/except (graceful if not available)",
+            "All plots saved as PNG files in addition to inline display",
+            "Naming matches convention: model_XX_SHORTNAME_curves.png, etc.",
+            "Final cell lists all generated files",
+            "Download instructions provided"
+          ]
+        }
+      ]
+    },
+    {
+      "phase": "8_readme",
+      "description": "Create the README.md — THE #1 deliverable. This is the most important phase. The README must be a complete educational experience with ~30 embedded images, tables, analogies, and explanations that pass the 12-year-old test. See PRD Section 9 for full requirements.",
+      "estimated_hours": 8,
+      "tasks": [
+        {
+          "id": "8.1",
+          "name": "README Sections 1–2: Title, Banner, Abstract & 'What Is This Project?'",
+          "priority": "critical",
+          "estimated_hours": 0.5,
+          "dependencies": ["6.3"],
+          "description": "Write the opening sections: (1) Title with emoji and badges (Python, TensorFlow, License). (2) One-line tagline. (3) 3-sentence abstract: what problem we solve, how (10 architectures), most surprising finding. (4) 'What Is This Project?' section for complete beginners — the clothing store analogy, zero assumed knowledge. (5) Embed sample images grid. (6) Simple 'Image → Neural Network → Prediction' flow diagram.",
+          "files_to_create": ["README.md"],
+          "acceptance_criteria": [
+            "Title is eye-catching with emoji",
+            "Abstract mentions 10 architectures and the key finding",
+            "Badges: Python 3.10+, TensorFlow 2.15+, License",
+            "'What Is This Project?' readable by 12-year-old",
+            "Sample images grid embedded (relative path to results/graphs/)",
+            "No jargon without immediate explanation"
+          ]
+        },
+        {
+          "id": "8.2",
+          "name": "README Sections 3–4: Fashion Categories & Dataset Deep Dive",
+          "priority": "critical",
+          "estimated_hours": 0.5,
+          "dependencies": ["8.1"],
+          "description": "Write: (1) The 10 Fashion Categories with example images grid embedded. (2) Table with class names, descriptions, difficulty notes. (3) 'The Shirt Problem' — explain and embed side-by-side comparison of T-shirt, Pullover, and Shirt showing why they're confusing. (4) Dataset Deep Dive: class distribution bar chart embedded, data split diagram, preprocessing explanation with before/after pixel values.",
+          "files_to_create": [],
+          "acceptance_criteria": [
+            "Example images grid embedded from results/graphs/sample_images_grid.png",
+            "10-row table with class details",
+            "Shirt Problem explained with visual evidence",
+            "Class distribution bar chart embedded",
+            "Train/val/test split explained with numbers",
+            "Normalization explained: '155 ÷ 255 = 0.608'"
+          ]
+        },
+        {
+          "id": "8.3",
+          "name": "README Section 5: 'What Is a Neural Network?' educational foundation",
+          "priority": "critical",
+          "estimated_hours": 1,
+          "dependencies": ["8.2"],
+          "description": "Write the educational foundation section aimed at 12-year-olds: (1) What a neuron does — inputs, weights, sum, activation, output — with diagram. (2) What a layer is — many neurons working together. (3) The Bakery Analogy: layers are recipe steps. (4) FC vs CNN visual comparison: how FC flattens the image (loses spatial info) vs CNN scans with filters (preserves spatial info). (5) Why this matters for image classification.",
+          "files_to_create": [],
+          "acceptance_criteria": [
+            "Neuron diagram embedded (from results/graphs/)",
+            "Bakery analogy fully developed",
+            "FC vs CNN explained with visual comparison",
+            "No math formulas — only intuition and pictures",
+            "A 12-year-old who reads only this section understands the basic idea"
+          ]
+        },
+        {
+          "id": "8.4",
+          "name": "README Section 6: All 10 Architecture Experiments — Group A (FC Models 1–3)",
+          "priority": "critical",
+          "estimated_hours": 1,
+          "dependencies": ["8.3", "6.3"],
+          "description": "Write the Group A section with: For each of Models 1, 2, 3: Model Card, 'Why This Model?', architecture summary, analogy, embedded training curves, embedded confusion matrix (at least for Model 1), results table (accuracy, loss, time), 'The Verdict'. After all three: Group A Summary with comparison chart embedded, key takeaway in bold, 'If you remember ONE thing…' summary.",
+          "files_to_create": [],
+          "acceptance_criteria": [
+            "3 complete model write-ups with all required elements",
+            "Training curves embedded for all 3 models (6 plots: acc + loss × 3)",
+            "At least 1 confusion matrix embedded",
+            "Group A comparison chart embedded",
+            "Results table with all 3 models compared",
+            "Each model answers its unique question (from PRD Section 10.2)",
+            "Bold key takeaway for the group"
+          ]
+        },
+        {
+          "id": "8.5",
+          "name": "README Section 6 continued: Group B (CNN Models 4–7)",
+          "priority": "critical",
+          "estimated_hours": 1,
+          "dependencies": ["8.4"],
+          "description": "Write the Group B section: For each of Models 4, 5, 6, 7: Model Card, 'Why This Model?', architecture, analogy, embedded training curves, results table, 'The Verdict'. Highlight the 'aha moment' when Model 4 beats all FC models. Model 6 may show vanishing gradients — explain why that failure is valuable. Group B Summary with comparison chart.",
+          "files_to_create": [],
+          "acceptance_criteria": [
+            "4 complete model write-ups",
+            "Training curves embedded for all 4 models (8 plots)",
+            "Model 4 'breakthrough moment' highlighted",
+            "Model 6 failure/vanishing gradient possibility discussed",
+            "Group B comparison chart embedded",
+            "Width vs Depth conclusion drawn (Model 5 vs 7)"
+          ]
+        },
+        {
+          "id": "8.6",
+          "name": "README Section 6 continued: Groups C (Models 8–9) & D (Model 10)",
+          "priority": "critical",
+          "estimated_hours": 0.5,
+          "dependencies": ["8.5"],
+          "description": "Write Groups C and D: Models 8 (Dropout), 9 (BatchNorm), 10 (Skip Connections). Each with full write-up. Dropout section compares training-vs-validation gap with Model 4. BatchNorm section compares convergence speed with Model 4. Skip Connections section explains ResNet concept and compares with Model 5/6. Group summaries after each.",
+          "files_to_create": [],
+          "acceptance_criteria": [
+            "3 complete model write-ups",
+            "Training curves embedded for all 3",
+            "Dropout: overfitting comparison with Model 4 (train/val gap)",
+            "BatchNorm: convergence speed comparison with Model 4",
+            "Skip: vanishing gradient solution explained, compared with Model 6",
+            "Group C and D summaries embedded"
+          ]
+        },
+        {
+          "id": "8.7",
+          "name": "README Sections 7–8: Loss Function Comparison & Grand Comparison",
+          "priority": "critical",
+          "estimated_hours": 1,
+          "dependencies": ["8.6"],
+          "description": "Write: (1) Section 7 — Loss Function Comparison: embedded side-by-side curves, convergence speed table, L2 regularization explanation with basketball analogy, lambda comparison chart. (2) Section 8 — The Grand Comparison: THE hero chart (all 10 models accuracy bar chart embedded), training time chart embedded, FC vs CNN comparison embedded, Master Results Table (all 10 models, all metrics), Best & Worst analysis, 'The Definitive Answer' recommendation.",
+          "files_to_create": [],
+          "acceptance_criteria": [
+            "Loss function comparison chart embedded",
+            "Lambda comparison chart embedded",
+            "Grand accuracy bar chart embedded — THE most important image",
+            "Training time comparison embedded",
+            "FC vs CNN comparison embedded",
+            "Master table with all 10 models (accuracy, loss, time, params, finding)",
+            "Clear best-architecture recommendation sentence"
+          ]
+        },
+        {
+          "id": "8.8",
+          "name": "README Sections 9–11: Misclassified Examples, Hardware Report, Key Takeaways",
+          "priority": "high",
+          "estimated_hours": 0.5,
+          "dependencies": ["8.7"],
+          "description": "Write: (1) Misclassified examples section with embedded grids for best and worst models, analysis of which classes are hardest, connection to 'Shirt Problem'. (2) Hardware report: GPU/CPU used, training time breakdown, GPU vs CPU speed difference. (3) 'What I Learned' — 5–10 numbered insights with supporting data, 'What surprised me most', 'If I could improve this project'.",
+          "files_to_create": [],
+          "acceptance_criteria": [
+            "Misclassified grids embedded for best + worst models",
+            "Hardest class identified (likely Shirt) with evidence",
+            "Hardware info reported clearly",
+            "5–10 learning insights, each backed by specific data/charts",
+            "Personal reflection included"
+          ]
+        },
+        {
+          "id": "8.9",
+          "name": "README Sections 12–15: How to Run, Structure, Technologies, Author",
+          "priority": "critical",
+          "estimated_hours": 1,
+          "dependencies": ["8.8"],
+          "description": "Write: (1) How to Run — Option A: Google Colab (one-click link, step-by-step), Option B: Local with UV (full installation per course guidelines, both WSL and PowerShell). (2) Project Structure — full directory tree with file purposes. (3) Code Files Summary table (file, description, line count) — mandatory per course guidelines. (4) Technologies table (package, version, purpose). (5) Author info. (6) License. (7) Acknowledgments (course, instructor). (8) GitHub upload instructions.",
+          "files_to_create": [],
+          "acceptance_criteria": [
+            "Colab: one-click 'Open in Colab' link/badge",
+            "Local: full UV setup for WSL AND PowerShell",
+            "Troubleshooting section with 3+ common issues",
+            "Directory tree matches actual structure",
+            "Code Files Summary table with all files and line counts",
+            "Every file under 150 lines confirmed",
+            "Total line count shown",
+            "GitHub clone + push instructions included"
+          ]
+        },
+        {
+          "id": "8.10",
+          "name": "README final review: image count, visual density, 12-year-old test",
+          "priority": "critical",
+          "estimated_hours": 1,
+          "dependencies": ["8.9"],
+          "description": "Final quality review of the README: (1) Count all embedded images — must be ≥30. (2) Check visual density — no more than 2 paragraphs without a visual. (3) Read through as a 12-year-old — mark any jargon without explanation. (4) Verify all image paths are relative and will work on GitHub. (5) Verify all tables render correctly in Markdown. (6) Check that README length is 500–1000+ lines. (7) Verify every model's unique question is answered.",
+          "files_to_create": [],
+          "acceptance_criteria": [
+            "≥30 images/charts embedded",
+            "Visual density rule met (never >2 paragraphs without visual)",
+            "12-year-old test passed — no unexplained jargon",
+            "All image paths use results/graphs/filename.png (relative)",
+            "All tables render correctly in GitHub Markdown preview",
+            "README is 500–1000+ lines",
+            "All 10 model unique questions answered",
+            "All 15 required sections present in correct order"
+          ]
+        }
+      ]
+    },
+    {
+      "phase": "9_testing_and_qa",
+      "description": "Comprehensive testing: verify everything works, all files are under 150 lines, all paths are relative, all images load, and the project is ready for GitHub.",
+      "estimated_hours": 2.5,
+      "tasks": [
+        {
+          "id": "9.1",
+          "name": "Code quality audit — file lengths, type hints, docstrings",
+          "priority": "critical",
+          "estimated_hours": 0.5,
+          "dependencies": ["6.3"],
+          "description": "Audit every .py file: (1) Confirm all files ≤150 lines — split any that exceed. (2) Confirm all functions have type hints. (3) Confirm all functions have docstrings with Args/Returns/Example. (4) Confirm all comments explain WHY not just WHAT. (5) Confirm no magic numbers (all named constants). (6) Confirm no absolute paths anywhere. (7) Confirm all imports work.",
+          "files_to_create": [],
+          "acceptance_criteria": [
+            "Every .py file is ≤150 lines (split if needed)",
+            "100% type hint coverage on public functions",
+            "100% docstring coverage on public functions",
+            "No magic numbers in any file",
+            "No absolute paths in any file",
+            "All imports work from fresh environment"
+          ]
+        },
+        {
+          "id": "9.2",
+          "name": "Colab notebook full run — Restart Runtime & Run All",
+          "priority": "critical",
+          "estimated_hours": 1,
+          "dependencies": ["7.8"],
+          "description": "Upload notebook to Google Colab, select GPU runtime, and run Restart Runtime → Run All. Verify: (1) No errors from first cell to last. (2) All 10 models train successfully. (3) All plots display inline. (4) All PNGs saved to disk. (5) Total runtime under 1 hour. Fix any issues found.",
+          "files_to_create": [],
+          "acceptance_criteria": [
+            "Notebook runs top-to-bottom without any errors",
+            "All 10 models produce accuracy within expected ranges",
+            "All plots display inline correctly",
+            "All PNGs saved to results/graphs/",
+            "Total execution time < 1 hour on GPU",
+            "Hardware report printed correctly"
+          ]
+        },
+        {
+          "id": "9.3",
+          "name": "Local execution full test — fresh UV environment",
+          "priority": "critical",
+          "estimated_hours": 0.5,
+          "dependencies": ["6.3"],
+          "description": "Test local execution from scratch: (1) Create new UV venv. (2) pip install -r requirements.txt. (3) python main.py --models 1,4,10 (quick test). (4) Verify results/ populated with PNGs and CSV. (5) Verify console output is clean and informative.",
+          "files_to_create": [],
+          "acceptance_criteria": [
+            "Fresh uv venv + install works without errors",
+            "main.py runs with --models subset without errors",
+            "Results directory populated correctly",
+            "Console output is clean",
+            "No import or path errors"
+          ]
+        },
+        {
+          "id": "9.4",
+          "name": "README image verification — all paths work on GitHub",
+          "priority": "critical",
+          "estimated_hours": 0.25,
+          "dependencies": ["8.10"],
+          "description": "Verify every image reference in README.md: (1) All paths are relative (not /absolute/). (2) All referenced PNG files exist in results/graphs/. (3) File names match exactly (case-sensitive). (4) No broken image links. (5) Preview README in a Markdown viewer to confirm all images render.",
+          "files_to_create": [],
+          "acceptance_criteria": [
+            "Every ![alt](path) in README points to an existing file",
+            "All paths are relative: results/graphs/filename.png",
+            "No broken images when previewed in Markdown viewer",
+            "Image file names are lowercase with underscores (no spaces)"
+          ]
+        },
+        {
+          "id": "9.5",
+          "name": "Pre-push checklist — final audit before GitHub",
+          "priority": "critical",
+          "estimated_hours": 0.25,
+          "dependencies": ["9.1", "9.2", "9.3", "9.4"],
+          "description": "Run through the complete pre-push checklist: (1) .gitignore protects .env, .venv/, __pycache__/. (2) venv/.gitkeep present. (3) All __init__.py files in place. (4) requirements.txt up to date. (5) No large files >100MB. (6) No __pycache__ directories. (7) No .ipynb_checkpoints. (8) README renders correctly. (9) Cache cleared (python -B or clear_cache).",
+          "files_to_create": [],
+          "acceptance_criteria": [
+            "All items on pre-push checklist confirmed ✅",
+            "No secrets in any committed file",
+            "No .venv/ or __pycache__ in commit",
+            "venv/.gitkeep IS in commit",
+            "Total repo size reasonable (<50MB)",
+            "README renders correctly in GitHub preview"
+          ]
+        }
+      ]
+    },
+    {
+      "phase": "10_github_upload",
+      "description": "Initialize Git repository, make initial commit, connect to GitHub, push, and verify everything displays correctly on GitHub.",
+      "estimated_hours": 0.5,
+      "tasks": [
+        {
+          "id": "10.1",
+          "name": "Git init, commit, and push to GitHub",
+          "priority": "critical",
+          "estimated_hours": 0.25,
+          "dependencies": ["9.5"],
+          "description": "Initialize the Git repository and push to GitHub: (1) git init. (2) git add . (3) git commit -m 'feat: Complete L37 Fashion-MNIST Architecture Study'. (4) Create new GitHub repo. (5) git remote add origin <URL>. (6) git branch -M main. (7) git push -u origin main. Provide commands for both WSL and PowerShell.",
+          "files_to_create": [],
+          "acceptance_criteria": [
+            "Repository pushed successfully to GitHub",
+            "All files visible on GitHub",
+            "No secrets or .venv in the repo",
+            "Commit message follows conventions"
+          ]
+        },
+        {
+          "id": "10.2",
+          "name": "Verify GitHub display — README, images, structure",
+          "priority": "critical",
+          "estimated_hours": 0.25,
+          "dependencies": ["10.1"],
+          "description": "Open the GitHub repository in a browser and verify: (1) README.md renders correctly with all sections. (2) All embedded images display (no broken links). (3) Directory structure visible and correct. (4) Notebook viewable in GitHub's notebook viewer. (5) Code files browseable with syntax highlighting.",
+          "files_to_create": [],
+          "acceptance_criteria": [
+            "README displays perfectly on GitHub homepage",
+            "All ~30 images render (no broken links)",
+            "Notebook renders in GitHub viewer",
+            "Directory structure matches PRD",
+            "Code files have syntax highlighting"
+          ]
+        }
+      ]
+    }
+  ],
+  "file_structure": {
+    "root": [
+      "README.md",
+      "main.py",
+      "requirements.txt",
+      ".gitignore",
+      ".env.example"
+    ],
+    "venv": ["venv/.gitkeep"],
+    "notebooks": ["notebooks/L37_Fashion_MNIST_Architecture_Study.ipynb"],
+    "src": [
+      "src/__init__.py",
+      "src/data_loader.py"
+    ],
+    "src/models": [
+      "src/models/__init__.py",
+      "src/models/fc_models.py",
+      "src/models/cnn_models.py",
+      "src/models/regularized_models.py",
+      "src/models/advanced_models.py"
+    ],
+    "src/training": [
+      "src/training/__init__.py",
+      "src/training/trainer.py",
+      "src/training/loss_functions.py"
+    ],
+    "src/visualization": [
+      "src/visualization/__init__.py",
+      "src/visualization/training_plots.py",
+      "src/visualization/confusion_matrix.py",
+      "src/visualization/comparison_charts.py"
+    ],
+    "src/utils": [
+      "src/utils/__init__.py",
+      "src/utils/paths.py",
+      "src/utils/logger.py",
+      "src/utils/hardware.py"
+    ],
+    "docs": [
+      "docs/PRD.md",
+      "docs/tasks.json"
+    ],
+    "results": [
+      "results/graphs/.gitkeep",
+      "results/tables/.gitkeep",
+      "results/examples/.gitkeep"
+    ],
+    "logs": [
+      "logs/.gitkeep",
+      "logs/config/log_config.json"
+    ],
+    "config": [
+      "config/training_config.yaml"
+    ]
+  },
+  "critical_path": [
+    "1.1 → 1.6 → 2.1 → 3.1–3.5 → 4.1–4.2 → 5.1–5.3 → 6.1 → 6.3 → 7.1–7.8 → 8.1–8.10 → 9.1–9.5 → 10.1–10.2"
+  ],
+  "summary": {
+    "total_phases": 10,
+    "total_tasks": 40,
+    "total_estimated_hours": 42,
+    "total_python_files": 17,
+    "total_expected_result_images": "~30 PNG files",
+    "execution_modes": 2,
+    "model_architectures": 10,
+    "readme_target_length": "500–1000+ lines",
+    "readme_embedded_images": "≥30"
+  }
+}

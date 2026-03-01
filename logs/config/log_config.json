@@ -1,0 +1,22 @@
+{
+  "ring_buffer": {
+    "max_lines_per_file": 1000,
+    "max_files": 5,
+    "log_directory": "logs",
+    "file_prefix": "fashion_mnist",
+    "file_extension": ".log"
+  },
+  "format": {
+    "pattern": "%(asctime)s | %(levelname)-8s | %(name)-20s | %(message)s",
+    "date_format": "%Y-%m-%d %H:%M:%S"
+  },
+  "levels": {
+    "console": "INFO",
+    "file": "DEBUG"
+  },
+  "status_display": {
+    "show_progress": true,
+    "show_eta": true,
+    "update_interval_seconds": 5
+  }
+}

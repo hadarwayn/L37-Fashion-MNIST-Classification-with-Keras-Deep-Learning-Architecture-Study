@@ -1,0 +1,171 @@
+# ============================================================
+# L37 Fashion-MNIST — Training Configuration
+# All hyperparameters in one place. No magic numbers in code.
+# ============================================================
+
+# --- Global defaults (apply to every model unless overridden) ---
+defaults:
+  epochs: 20               # Full passes through training data
+  batch_size: 64           # Images per gradient update step
+  optimizer: adam           # Adaptive learning rate optimizer
+  learning_rate: 0.001     # Adam default — good starting point
+  random_seed: 42          # For reproducible results
+
+# --- Early stopping — prevents overtraining ---
+early_stopping:
+  monitor: val_loss        # Watch validation loss
+  patience: 5              # Stop after 5 epochs with no improvement
+  restore_best_weights: true  # Roll back to the best epoch
+
+# --- Data split sizes ---
+data:
+  train_size: 50000        # From Keras 60K train set
+  val_size: 10000          # Carved from Keras 60K train set
+  test_size: 10000         # Keras test set (untouched)
+  num_classes: 10          # Fashion categories
+  image_height: 28
+  image_width: 28
+  channels: 1              # Grayscale
+
+# --- Class names (label index → human name) ---
+class_names:
+  - T-shirt/top
+  - Trouser
+  - Pullover
+  - Dress
+  - Coat
+  - Sandal
+  - Shirt
+  - Sneaker
+  - Bag
+  - Ankle boot
+
+# ============================================================
+# Per-model configuration
+# ============================================================
+models:
+  # --- Group A: Fully Connected Baselines ---
+  model_01_fc_baseline:
+    name: "FC Baseline"
+    group: A
+    type: FC
+    epochs: 20
+    layers:
+      - { type: Flatten, input_shape: [28, 28] }
+      - { type: Dense, units: 128, activation: relu }
+      - { type: Dense, units: 10, activation: softmax }
+
+  model_02_narrow_deep_fc:
+    name: "Narrow Deep FC"
+    group: A
+    type: FC
+    epochs: 20
+    layers:
+      - { type: Flatten, input_shape: [28, 28] }
+      - { type: Dense, units: 64, activation: relu }
+      - { type: Dense, units: 64, activation: relu }
+      - { type: Dense, units: 64, activation: relu }
+      - { type: Dense, units: 10, activation: softmax }
+
+  model_03_wide_shallow_fc:
+    name: "Wide Shallow FC"
+    group: A
+    type: FC
+    epochs: 20
+    layers:
+      - { type: Flatten, input_shape: [28, 28] }
+      - { type: Dense, units: 512, activation: relu }
+      - { type: Dense, units: 10, activation: softmax }
+
+  # --- Group B: CNN Exploration ---
+  model_04_baseline_cnn:
+    name: "Baseline CNN"
+    group: B
+    type: CNN
+    epochs: 20
+    filters: [32, 64]
+    kernel_size: 3
+    dense_units: 128
+
+  model_05_deep_cnn:
+    name: "Deep CNN"
+    group: B
+    type: CNN
+    epochs: 30              # Deeper models may need more epochs
+    blocks: 4
+    filters: [32, 64, 128, 256]
+    kernel_size: 3
+    dense_units: 128
+
+  model_06_very_deep_cnn:
+    name: "Very Deep CNN"
+    group: B
+    type: CNN
+    epochs: 30
+    blocks: 5
+    filters: [32, 64, 128, 256, 512]
+    kernel_size: 3
+    padding: same            # Preserve spatial dimensions
+    dense_units: 128
+
+  model_07_wide_cnn:
+    name: "Wide CNN"
+    group: B
+    type: CNN
+    epochs: 20
+    filters: [128, 256]
+    kernel_size: 3
+    dense_units: 256
+
+  # --- Group C: Regularization Techniques ---
+  model_08_cnn_dropout:
+    name: "CNN + Dropout"
+    group: C
+    type: CNN
+    epochs: 20
+    filters: [32, 64]       # Same as Model 4
+    kernel_size: 3
+    dense_units: 128
+    dropout_conv: 0.25       # After each conv block
+    dropout_dense: 0.5       # Before final output
+
+  model_09_cnn_batchnorm:
+    name: "CNN + BatchNorm"
+    group: C
+    type: CNN
+    epochs: 20
+    filters: [32, 64]       # Same as Model 4
+    kernel_size: 3
+    dense_units: 128
+
+  # --- Group D: Advanced Architecture ---
+  model_10_cnn_skip:
+    name: "CNN + Skip Connections"
+    group: D
+    type: CNN
+    epochs: 30
+    residual_blocks: 4
+    filters: [32, 64, 128, 256]
+    kernel_size: 3
+    dense_units: 128
+
+# ============================================================
+# Loss function comparison experiment
+# ============================================================
+loss_comparison:
+  base_model: model_04_baseline_cnn  # Use Baseline CNN for fair comparison
+  loss_functions:
+    - sparse_categorical_crossentropy
+    - categorical_crossentropy
+    - l2_regularized                  # Custom loss
+  l2_lambda_values: [0.001, 0.01, 0.1]  # Regularization strengths to test
+
+# ============================================================
+# Visualization settings
+# ============================================================
+visualization:
+  dpi: 300                  # Publication-quality resolution
+  figsize_curves: [12, 5]   # Width × height for training curves
+  figsize_confusion: [10, 8]
+  figsize_comparison: [14, 8]
+  save_format: png

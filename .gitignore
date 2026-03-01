@@ -1,0 +1,82 @@
+# ========================
+# Python
+# ========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# ========================
+# Virtual Environment
+# ========================
+.venv/
+env/
+ENV/
+
+# ========================
+# IDE / Editor
+# ========================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.settings/
+
+# ========================
+# Jupyter Notebook
+# ========================
+.ipynb_checkpoints/
+
+# ========================
+# OS Files
+# ========================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ========================
+# Environment & Secrets
+# ========================
+.env
+*.pem
+*.key
+
+# ========================
+# Logs (keep config)
+# ========================
+logs/*.log
+logs/*.txt
+!logs/config/
+!logs/config/log_config.json
+!logs/.gitkeep
+
+# ========================
+# TensorFlow / Keras
+# ========================
+*.h5
+*.keras
+*.pb
+saved_models/
+checkpoints/
+
+# ========================
+# Large data files
+# ========================
+*.npy
+*.npz
+*.pkl
+*.pickle
+
+# ========================
+# Keep tracked markers
+# ========================
+!venv/.gitkeep
+!results/graphs/.gitkeep
+!results/tables/.gitkeep
+!results/examples/.gitkeep
