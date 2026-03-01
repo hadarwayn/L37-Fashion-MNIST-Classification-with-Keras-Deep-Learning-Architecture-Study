@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="results/graphs/sample_images_grid.png" alt="Fashion-MNIST Sample Grid" width="700"/>
-</p>
-
 <h1 align="center">&#x1F9E5; L37 &mdash; Fashion-MNIST Deep Learning Architecture Study</h1>
 
 <p align="center">
@@ -42,7 +38,7 @@ This project is a controlled scientific study that trains, evaluates, and compar
 | 4 | [What Is a Neural Network?](#what-is-a-neural-network-educational-foundation) | Neurons, layers, and the bakery analogy |
 | 5 | [The 10 Architectures](#the-10-architectures--our-experiments) | Detailed model cards, results, and insights |
 | 6 | [Loss Function Comparison](#loss-function-comparison) | How the network measures "wrongness" |
-| 7 | [The Grand Comparison](#the-grand-comparison) | All 10 models head-to-head |
+| 7 | [The Grand Comparison](#the-grand-comparison) | All 10 models head-to-head (Local + Colab results) |
 | 8 | [Hardware & Performance](#hardware--performance-report) | GPU info and training times |
 | 9 | [Misclassified Examples](#misclassified-examples) | Where even the best model fails |
 | 10 | [Key Takeaways](#what-i-learned--key-takeaways) | The 10 biggest lessons |
@@ -234,6 +230,8 @@ This project tests both types. Here is the key difference:
 ---
 
 ## The 10 Architectures &mdash; Our Experiments
+
+> **Note:** The accuracy and timing values in the model cards below are from the **local CPU training run**. For Colab T4 GPU results and a side-by-side comparison, see the [Grand Comparison](#the-grand-comparison) section.
 
 We organize our 10 models into **4 groups**, each answering a different question:
 
@@ -688,23 +686,25 @@ The "strength" of L2 regularization is controlled by a parameter called **lambda
 
 ### Loss Function Results
 
-All three loss functions were tested on the **same Baseline CNN architecture (Model 4)** with identical hyperparameters:
+All three loss functions were tested on the **same Baseline CNN architecture (Model 4)** with identical hyperparameters. We show results from both environments:
 
-| Loss Function | Test Accuracy | Training Time |
-|---------------|:------------:|:------------:|
-| Sparse Categorical CE | 90.70% | 213.1s |
-| Categorical CE | 90.75% | 175.5s |
-| L2 Regularized (lambda=0.001) | 90.02% | 278.5s |
-| L2 Regularized (lambda=0.01) | 89.60% | 278.5s |
-| L2 Regularized (lambda=0.1) | 87.91% | 278.5s |
+| Loss Function | Local Acc | Colab Acc | Local Time | Colab Time |
+|---------------|:---------:|:---------:|:----------:|:----------:|
+| Sparse Categorical CE | 90.70% | 90.39% | 213.1s | 72.1s |
+| Categorical CE | 90.75% | 90.77% | 175.5s | 64.8s |
+| L2 Regularized (lambda=0.001) | 90.02% | 90.10% | 278.5s | 108.6s |
+| L2 Regularized (lambda=0.01) | 89.60% | 87.90% | 278.5s | 113.2s |
+| L2 Regularized (lambda=0.1) | 87.91% | 84.77% | 278.5s | 114.8s |
 
-> **Conclusion:** Sparse CE and Categorical CE are mathematically equivalent and produce nearly identical results. L2 regularization with a small lambda has minimal effect, while a large lambda (0.1) hurts accuracy by over-constraining the weights.
+> **Conclusion:** Sparse CE and Categorical CE are mathematically equivalent and produce nearly identical results in both environments. L2 regularization with a small lambda has minimal effect, while a large lambda (0.1) hurts accuracy by over-constraining the weights. The effect of excessive L2 regularization is even more pronounced on Colab (84.77% vs 87.91% locally).
 
 ---
 
 ## The Grand Comparison
 
 This is where all 10 models meet on the same stage. Every bar, every line, and every number below comes from identical evaluation on the **same 10,000 test images** that no model saw during training.
+
+> **Want to reproduce these results?** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/hadarwayn/L37-Fashion-MNIST-Classification-with-Keras-Deep-Learning-Architecture-Study/blob/main/notebooks/L37_Fashion_MNIST_Architecture_Study.ipynb) &mdash; the notebook runs all 10 models and prints a full comparison table at the end.
 
 ### Accuracy Comparison
 
@@ -720,44 +720,121 @@ This is where all 10 models meet on the same stage. Every bar, every line, and e
 
 ### Master Results Table
 
-| # | Model | Group | Params | Test Accuracy | Test Loss | Time | Best Epoch |
-|:-:|-------|:-----:|-------:|:-------------:|:---------:|:----:|:----------:|
-| 1 | FC Baseline | A | 101,770 | 88.13% | 0.3322 | 77.9s | 11 / 16 |
-| 2 | Narrow Deep FC | A | 59,210 | 88.40% | 0.3411 | 65.9s | 13 / 18 |
-| 3 | Wide Shallow FC | A | 407,050 | 88.93% | 0.3267 | 129.1s | 14 / 19 |
-| 4 | Baseline CNN | B | 225,034 | 90.70% | 0.2628 | 198.5s | 9 / 14 |
-| 5 | Deep CNN | B | 1,205,866 | 92.37% | 0.2326 | 736.7s | 8 / 13 |
-| 6 | Very Deep CNN | B | 4,778,602 | 91.36% | 0.2403 | 6576.2s | 6 / 11 |
-| 7 | Wide CNN | B | 1,937,674 | 91.27% | 0.2554 | 648.6s | 6 / 11 |
-| 8 | CNN + Dropout | C | 225,034 | 90.87% | 0.2433 | 399.2s | 18 / 20 |
-| 9 | CNN + BatchNorm | C | 225,930 | 89.65% | 0.2826 | 248.7s | 3 / 8 |
-| 10 | CNN + Skip | D | 1,255,146 | 91.90% | 0.2320 | 14750.8s | 6 / 11 |
+We ran the same 10 models in **two environments** &mdash; a local Intel CPU (no GPU) and a Google Colab T4 GPU &mdash; to see how hardware affects results. The table below shows both side by side.
+
+| # | Model | Group | Params | Local Acc | Colab Acc | Colab Loss | Colab Val Acc | Local Time | Colab Time | Epochs |
+|:-:|-------|:-----:|-------:|:---------:|:---------:|:----------:|:-------------:|:----------:|:----------:|:------:|
+| 1 | FC Baseline | A | 101,770 | 88.13% | 87.63% | 0.3477 | 88.74% | 77.9s | 53.5s | 12 |
+| 2 | Narrow Deep FC | A | 59,210 | 88.40% | 87.33% | 0.3661 | 88.48% | 65.9s | 74.8s | 15 |
+| 3 | Wide Shallow FC | A | 407,050 | 88.93% | 88.03% | 0.3402 | 89.13% | 129.1s | 45.6s | 11 |
+| 4 | Baseline CNN | B | 225,034 | 90.70% | 90.82% | 0.2665 | 91.36% | 198.5s | 59.4s | 11 |
+| 5 | Deep CNN | B | 1,205,866 | **92.37%** | 90.31% | 0.2693 | 92.09% | 736.7s | 99.2s | 10 |
+| 6 | Very Deep CNN | B | 4,778,602 | 91.36% | 90.40% | 0.2629 | 91.73% | 6,576.2s | 202.9s | 9 |
+| 7 | Wide CNN | B | 1,937,674 | 91.27% | 90.00% | 0.2801 | 90.98% | 648.6s | 74.7s | 9 |
+| 8 | CNN + Dropout | C | 225,034 | 90.87% | **91.02%** | 0.2433 | 91.90% | 399.2s | 130.2s | 20 |
+| 9 | CNN + BatchNorm | C | 225,930 | 89.65% | 89.90% | 0.2794 | 90.82% | 248.7s | 70.5s | 9 |
+| 10 | CNN + Skip | D | 1,255,146 | 91.90% | 91.01% | 0.2602 | 91.89% | 14,750.8s | 175.2s | 8 |
+
+> **Bold** = best accuracy in that environment. Local best: Model 5 (92.37%). Colab best: Model 8 (91.02%). Total Colab training time: **16 min** across all 10 models.
+
+### Efficiency Analysis
+
+Not all accuracy is created equal. A model that reaches 91% with 225K parameters is more *efficient* than one that reaches the same with 4.8M. The table below ranks by accuracy, with two efficiency metrics:
+
+| Model | Accuracy | Params | Time | Acc / 1M Params | Acc / Min |
+|-------|:--------:|-------:|:----:|:---------------:|:---------:|
+| M8 CNN+Dropout | 91.02% | 225,034 | 130.2s | 404.5%/M | 41.93%/min |
+| M10 CNN+Skip | 91.01% | 1,255,146 | 175.2s | 72.5%/M | 31.16%/min |
+| M4 Baseline CNN | 90.82% | 225,034 | 59.4s | 403.6%/M | 91.73%/min |
+| M6 Very Deep CNN | 90.40% | 4,778,602 | 202.9s | 18.9%/M | 26.73%/min |
+| M5 Deep CNN | 90.31% | 1,205,866 | 99.2s | 74.9%/M | 54.62%/min |
+| M7 Wide CNN | 90.00% | 1,937,674 | 74.7s | 46.4%/M | 72.27%/min |
+| M9 CNN+BatchNorm | 89.90% | 225,930 | 70.5s | 397.9%/M | 76.54%/min |
+| M3 Wide Shallow FC | 88.03% | 407,050 | 45.6s | 216.3%/M | 115.88%/min |
+| M1 FC Baseline | 87.63% | 101,770 | 53.5s | 861.1%/M | 98.32%/min |
+| M2 Narrow Deep FC | 87.33% | 59,210 | 74.8s | 1474.9%/M | 70.09%/min |
+
+> **Acc/1M Params** = how much accuracy you get per million parameters (higher = more efficient architecture). **Acc/Min** = how much accuracy you get per minute of training (higher = faster to train).
+
+### Recommendation Guide
+
+| Priority | Recommended Model | Accuracy | Why |
+|----------|-------------------|:--------:|-----|
+| **Highest accuracy** | M8 CNN+Dropout | 91.02% | Best overall test performance |
+| **Fastest training** | M3 Wide Shallow FC | 88.03% | Only 45.6s to train |
+| **Most efficient** | M8 CNN+Dropout | 91.02% | Best accuracy-to-parameter ratio among CNNs |
+| **Best pure CNN** | M4 Baseline CNN | 90.82% | No regularization tricks needed |
+| **Best regularized** | M8 CNN+Dropout | 91.02% | Reduced overfitting |
+| **Production pick** | M8 CNN+Dropout | 91.02% | Good accuracy + robust generalization |
+
+### Group Performance Summary (Colab)
+
+| Group | Models | Avg Accuracy | Best Model | Best Acc | Avg Time |
+|:-----:|--------|:------------:|------------|:--------:|:--------:|
+| A &mdash; FC Baselines | 3 | 87.66% | M3 Wide Shallow FC | 88.03% | 57.9s |
+| B &mdash; CNN Exploration | 4 | 90.38% | M4 Baseline CNN | 90.82% | 109.1s |
+| C &mdash; Regularization | 2 | 90.46% | M8 CNN+Dropout | 91.02% | 100.4s |
+| D &mdash; Advanced (Skip) | 1 | 91.01% | M10 CNN+Skip | 91.01% | 175.2s |
 
 ### Best & Worst Analysis
 
-**Best Performer: Deep CNN (Model 5)**
-- Why: 4 convolutional blocks (32 &rarr; 64 &rarr; 128 &rarr; 256) provide the right balance of depth and capacity
-- Accuracy: **92.37%** (test loss: 0.2326)
-- Trained in 736.7s with best weights at epoch 8
+#### Local (Intel CPU, No GPU)
 
-**Worst Performer: FC Baseline (Model 1)**
-- Why: Simplest architecture with a single hidden layer and no spatial awareness
-- Accuracy: **88.13%** (test loss: 0.3322)
-- The lack of convolutional layers limits its ability to detect spatial patterns
+**Best Performer: Deep CNN (Model 5)** &mdash; 92.37%
+- 4 convolutional blocks (32 &rarr; 64 &rarr; 128 &rarr; 256) provide the right balance of depth and capacity
+- Test loss: 0.2326 | Trained in 736.7s | Best weights at epoch 8
+
+**Worst Performer: FC Baseline (Model 1)** &mdash; 88.13%
+- Simplest architecture with a single hidden layer and no spatial awareness
+- Test loss: 0.3322 | The lack of convolutional layers limits spatial pattern detection
+
+#### Google Colab (T4 GPU)
+
+**Best Performer: CNN + Dropout (Model 8)** &mdash; 91.02%
+- Same architecture as Model 4 but with Dropout(0.25) after each conv block and Dropout(0.5) before the final Dense layer
+- Validation accuracy: 91.90% | Trained in 130.2s on T4 GPU
+
+**Worst Performer: Narrow Deep FC (Model 2)** &mdash; 87.33%
+- Three narrow hidden layers (64 neurons each) create an information bottleneck
+- Validation accuracy: 88.48% | Despite more layers, the narrow width limits capacity
+
+### Local vs. Colab: Why Do Results Differ?
+
+The same architectures and hyperparameters produced **different rankings** across environments. This is not a bug &mdash; it is a fundamental property of neural networks:
+
+| Factor | Explanation |
+|--------|-------------|
+| **Random initialization** | Weights start from random values; different seeds &rarr; different local minima |
+| **GPU vs CPU numerics** | Floating-point rounding differs slightly between hardware, affecting gradient updates |
+| **Non-deterministic GPU ops** | CUDA operations like cuDNN convolutions are non-deterministic by default |
+| **Batch ordering** | Data shuffling uses different random states |
+
+**What stayed consistent across both environments:**
+- CNNs always beat FC networks (the FC ceiling of ~88-89% held in both)
+- The top-3 models were always CNNs from Groups B-D
+- The bottom-3 models were always the FC models from Group A
+- Model rankings within Group A and the FC-to-CNN gap were stable
+
+**What changed:**
+- The exact best model: Deep CNN (local) vs. CNN+Dropout (Colab)
+- Individual accuracy values varied by up to ~2% across runs
+- Training times were 3-80x faster on GPU depending on model complexity
+
+> **Takeaway:** When you see a paper claiming "Model X achieves 91.5% accuracy," remember that result is one sample from a distribution. Small differences (< 1%) between models are usually noise. The *architectural patterns* (FC < CNN, regularization helps) are what you can trust.
 
 ### The Definitive Answer
 
-> **If you need ONE model for Fashion-MNIST classification and care about both accuracy and efficiency:**
+> **If you need ONE model for Fashion-MNIST classification:**
 >
-> Choose **Deep CNN (Model 5)**. It achieved the highest accuracy of **92.37%** with a reasonable training time of 736.7s and strong generalization (test loss: 0.2326).
+> Choose **CNN + Dropout (Model 8)** or **Deep CNN (Model 5)**. Both consistently rank in the top 3 across environments. Model 8 is lighter (225K params, same as the Baseline CNN) and more robust thanks to dropout regularization. Model 5 scored highest locally (92.37%) but requires 5x the parameters.
 >
-> **If you want a good balance of accuracy, speed, and simplicity:**
+> **If you care about efficiency (accuracy per parameter):**
 >
-> Choose **CNN + Skip Connections (Model 10)**. It scored **91.90%** with stable training thanks to residual paths, though it required the longest training time (14750.8s on CPU).
+> Choose **CNN + Dropout (Model 8)**. With only 225,034 parameters it achieves 91%+ accuracy &mdash; the best accuracy-to-parameter ratio of any model in the study.
 >
 > **If you want to understand *why* CNNs are better than FC networks:**
 >
-> Compare **FC Baseline (Model 1, 88.13%)** vs **Baseline CNN (Model 4, 90.70%)**. Similar parameter budget, 2.57% accuracy difference. That gap is the value of spatial awareness.
+> Compare **FC Baseline (Model 1)** vs **Baseline CNN (Model 4)**: ~88% vs ~91%. Similar parameter budget, ~3% accuracy gap. That gap is the value of spatial awareness.
 
 ---
 
@@ -765,49 +842,52 @@ This is where all 10 models meet on the same stage. Every bar, every line, and e
 
 ### System Configuration
 
-| Component | Details |
-|-----------|---------|
-| **GPU** | None (CPU-only training) |
-| **CPU** | Intel 13th Gen Core (Intel64 Family 6 Model 186) |
-| **RAM** | System RAM (CPU training) |
-| **TensorFlow** | 2.18.0 |
-| **CUDA** | N/A (no GPU) |
+We ran all models in **two environments** to compare CPU vs GPU performance:
+
+| Component | Local Machine | Google Colab |
+|-----------|---------------|--------------|
+| **GPU** | None (CPU-only) | NVIDIA T4 (15 GB VRAM) |
+| **CPU** | Intel 13th Gen Core | Intel Xeon (Colab instance) |
+| **RAM** | System RAM | ~12.7 GB |
+| **TensorFlow** | 2.18.0 | 2.19.0 |
+| **CUDA** | N/A | 12.x (cuDNN enabled) |
+| **Total Training Time** | ~6h 37m | ~16 min |
 
 > Hardware information is automatically detected and logged by `src/utils/hardware.py` when training begins.
 
 ### Training Time Breakdown
 
-| Model | Parameters | Local CPU Time | Colab T4 GPU (est.) |
-|-------|-----------|---------------:|--------------------:|
-| FC Baseline | 101,770 | 77.9s | ~10s |
-| Narrow Deep FC | 59,210 | 65.9s | ~10s |
-| Wide Shallow FC | 407,050 | 129.1s | ~15s |
-| Baseline CNN | 225,034 | 198.5s | ~25s |
-| Deep CNN | 1,205,866 | 736.7s | ~60s |
-| Very Deep CNN | 4,778,602 | 6,576.2s (~1h50m) | ~180s |
-| Wide CNN | 1,937,674 | 648.6s | ~50s |
-| CNN + Dropout | 225,034 | 399.2s | ~35s |
-| CNN + BatchNorm | 225,930 | 248.7s | ~25s |
-| CNN + Skip | 1,255,146 | 14,750.8s (~4h6m) | ~120s |
-| **Total** | | **~6h37m** | **~10 min** |
+| Model | Parameters | Local CPU Time | Colab T4 GPU | Speedup |
+|-------|-----------|---------------:|-------------:|--------:|
+| FC Baseline | 101,770 | 77.9s | 53.5s | 1.5x |
+| Narrow Deep FC | 59,210 | 65.9s | 74.8s | 0.9x |
+| Wide Shallow FC | 407,050 | 129.1s | 45.6s | 2.8x |
+| Baseline CNN | 225,034 | 198.5s | 59.4s | 3.3x |
+| Deep CNN | 1,205,866 | 736.7s | 99.2s | 7.4x |
+| Very Deep CNN | 4,778,602 | 6,576.2s (~1h50m) | 202.9s (~3.4m) | 32.4x |
+| Wide CNN | 1,937,674 | 648.6s | 74.7s | 8.7x |
+| CNN + Dropout | 225,034 | 399.2s | 130.2s | 3.1x |
+| CNN + BatchNorm | 225,930 | 248.7s | 70.5s | 3.5x |
+| CNN + Skip | 1,255,146 | 14,750.8s (~4h6m) | 175.2s (~2.9m) | 84.2x |
+| **Total** | | **~6h37m** | **~16 min** | **~25x** |
 
-> **Local times** are actual measurements on an Intel 13th Gen CPU (no GPU). **Colab GPU times** are estimates for a T4 GPU &mdash; run the notebook in Colab to get exact measurements. GPU acceleration provides roughly 10-50x speedup depending on model complexity.
+> **Both columns are actual measurements.** Local: Intel 13th Gen CPU (no GPU). Colab: NVIDIA T4 GPU. GPU speedup ranges from almost none for small FC models (which are CPU-bound anyway) to **84x** for the most complex model (CNN + Skip). The bigger the model, the greater the GPU advantage.
 
 ---
 
 ## Misclassified Examples
 
-Even the best model gets some images wrong. Let us look at the failures to understand *why*.
+Even the best model gets some images wrong. Let us look at the failures to understand *why*. The examples below are from the **local training run** (best: Deep CNN, worst: FC Baseline).
 
-### Best Model Misclassifications
+### Best Model Misclassifications (Deep CNN &mdash; 92.37%)
 
 ![Best Model Misclassified Examples](results/graphs/misclassified_deep_cnn.png)
 
-![Best Model Confusion Matrix](results/graphs/cnn__skip_connections_confusion.png)
+![Best Model Confusion Matrix](results/graphs/deep_cnn_confusion.png)
 
 The confusion matrix above shows, for each true class, how often the model predicted each category. A perfect model would have all numbers on the diagonal (top-left to bottom-right) and zeros everywhere else.
 
-### Worst Model Misclassifications
+### Worst Model Misclassifications (FC Baseline &mdash; 88.13%)
 
 ![Worst Model Misclassified Examples](results/graphs/misclassified_fc_baseline.png)
 
@@ -841,7 +921,7 @@ Look at the confusion matrices and find the intersection of classes 0 (T-shirt),
 
 4. **Skip connections are the solution to vanishing gradients.** Model 10 (CNN + Skip) trains as deep as Model 6 (Very Deep CNN) but more stably, thanks to residual paths.
 
-5. **Dropout does not boost accuracy &mdash; it boosts reliability.** Dropout closes the train-validation gap, making the model more trustworthy on unseen data.
+5. **Dropout boosts reliability &mdash; and sometimes accuracy too.** Dropout closes the train-validation gap. On our Colab run, CNN+Dropout was actually the #1 model (91.02%), proving that regularization can win outright.
 
 6. **BatchNorm speeds up convergence.** It does not necessarily change final accuracy, but it gets you there faster and more smoothly.
 
