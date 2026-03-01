@@ -1161,6 +1161,7 @@ L37/
 
 | | |
 |---|---|
+| **Author** | Hadar Wayn |
 | **Course** | AI Developer Expert |
 | **Instructor** | Dr. Yoram Segal |
 | **Assignment** | L37 &mdash; Fashion-MNIST Architecture Study |
@@ -1173,7 +1174,7 @@ This project is licensed under the **MIT License**. See below for the full text:
 ```
 MIT License
 
-Copyright (c) 2025
+Copyright (c) 2025 Hadar Wayn
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -1196,6 +1197,8 @@ SOFTWARE.
 
 ### Acknowledgments
 
+- **[Anthropic Claude Code](https://claude.ai/claude-code)** &mdash; AI-assisted development, code generation, and documentation
+- **[Google Colab](https://colab.research.google.com/)** &mdash; Free cloud environment with NVIDIA T4 GPU used to train and benchmark all 10 models
 - **Fashion-MNIST** dataset by [Zalando Research](https://github.com/zalandoresearch/fashion-mnist) (Han Xiao, Kashif Rasul, Roland Vollgraf)
 - **TensorFlow** and **Keras** by the Google Brain team
 - **ResNet** architecture concepts from "Deep Residual Learning for Image Recognition" (He et al., 2015)
