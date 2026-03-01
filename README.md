@@ -43,8 +43,8 @@ This project is a controlled scientific study that trains, evaluates, and compar
 | 5 | [The 10 Architectures](#the-10-architectures--our-experiments) | Detailed model cards, results, and insights |
 | 6 | [Loss Function Comparison](#loss-function-comparison) | How the network measures "wrongness" |
 | 7 | [The Grand Comparison](#the-grand-comparison) | All 10 models head-to-head |
-| 8 | [Misclassified Examples](#misclassified-examples) | Where even the best model fails |
-| 9 | [Hardware & Performance](#hardware--performance-report) | GPU info and training times |
+| 8 | [Hardware & Performance](#hardware--performance-report) | GPU info and training times |
+| 9 | [Misclassified Examples](#misclassified-examples) | Where even the best model fails |
 | 10 | [Key Takeaways](#what-i-learned--key-takeaways) | The 10 biggest lessons |
 | 11 | [How to Run This Project](#how-to-run-this-project) | Colab, WSL, and PowerShell instructions |
 | 12 | [Project Structure](#project-structure) | Directory tree and file descriptions |
@@ -62,8 +62,6 @@ Imagine you work at a massive clothing warehouse. Every day, **thousands of item
 We show a neural network 60,000 tiny pictures of clothing (each just 28 x 28 pixels, smaller than your thumbnail) and let it *learn* what makes a sneaker look different from an ankle boot. Then we test it on 10,000 images it has **never seen before** to see how well it learned.
 
 But here is the twist: we do not build just one network. We build **ten different ones**, each with a different internal design, and we compare them scientifically. It is like testing 10 different sorting machines to find out which one is fastest and most accurate.
-
-![Sample Images Grid](results/graphs/sample_images_grid.png)
 
 ### The Journey in One Picture
 
@@ -263,7 +261,7 @@ These three models flatten each 28x28 image into a 784-number list and use only 
 | **Name** | FC Baseline |
 | **Group** | A &mdash; Fully Connected Baselines |
 | **Architecture** | Flatten &rarr; Dense(128, ReLU) &rarr; Dense(10, Softmax) |
-| **Parameters** | ~101K |
+| **Parameters** | 101,770 |
 | **Epochs** | 20 |
 
 **Why This Model?**
@@ -293,7 +291,7 @@ Every experiment needs a starting point. This is the simplest possible neural ne
 | **Name** | Narrow Deep FC |
 | **Group** | A &mdash; Fully Connected Baselines |
 | **Architecture** | Flatten &rarr; Dense(64) &rarr; Dense(64) &rarr; Dense(64) &rarr; Dense(10) |
-| **Parameters** | ~57K |
+| **Parameters** | 59,210 |
 | **Epochs** | 20 |
 
 **Why This Model?**
@@ -321,7 +319,7 @@ What if we make the network *deeper* (more layers) but *narrower* (fewer neurons
 | **Name** | Wide Shallow FC |
 | **Group** | A &mdash; Fully Connected Baselines |
 | **Architecture** | Flatten &rarr; Dense(512, ReLU) &rarr; Dense(10, Softmax) |
-| **Parameters** | ~406K |
+| **Parameters** | 407,050 |
 | **Epochs** | 20 |
 
 **Why This Model?**
@@ -347,10 +345,10 @@ The opposite experiment: instead of going deeper, we go *wider*. With 512 neuron
 ![Group A Summary](results/graphs/group_a_summary.png)
 
 | Model | Params | Accuracy | Key Finding |
-|-------|--------|----------|-------------|
-| FC Baseline | ~101K | 88.13% | Establishes the floor |
-| Narrow Deep FC | ~57K | 88.40% | Depth alone does not help FC |
-| Wide Shallow FC | ~406K | 88.93% | Width alone hits a ceiling |
+|-------|-------:|----------|-------------|
+| FC Baseline | 101,770 | 88.13% | Establishes the floor |
+| Narrow Deep FC | 59,210 | 88.40% | Depth alone does not help FC |
+| Wide Shallow FC | 407,050 | 88.93% | Width alone hits a ceiling |
 
 > **Key Takeaway: Fully connected networks plateau around 88-89% on Fashion-MNIST regardless of depth or width. To break through this ceiling, we need an architecture that understands spatial relationships in images. Enter: convolutional neural networks.**
 
@@ -373,7 +371,7 @@ Now we add **convolutions** &mdash; the secret sauce for image recognition. Thes
 | **Name** | Baseline CNN |
 | **Group** | B &mdash; CNN Exploration |
 | **Architecture** | Conv2D(32) &rarr; MaxPool &rarr; Conv2D(64) &rarr; MaxPool &rarr; Dense(128) &rarr; Dense(10) |
-| **Parameters** | ~200K |
+| **Parameters** | 225,034 |
 | **Filters** | [32, 64] |
 | **Epochs** | 20 |
 
@@ -404,7 +402,7 @@ This is the moment of truth &mdash; the "aha!" moment. We take a simple CNN with
 | **Name** | Deep CNN |
 | **Group** | B &mdash; CNN Exploration |
 | **Architecture** | 4 Conv blocks (32 &rarr; 64 &rarr; 128 &rarr; 256 filters) &rarr; Dense(128) &rarr; Dense(10) |
-| **Parameters** | ~800K |
+| **Parameters** | 1,205,866 |
 | **Blocks** | 4 |
 | **Epochs** | 30 |
 
@@ -435,7 +433,7 @@ If 2 convolutional blocks are good, are 4 better? Deeper networks can learn more
 | **Name** | Very Deep CNN |
 | **Group** | B &mdash; CNN Exploration |
 | **Architecture** | 5 Conv blocks (32 &rarr; 64 &rarr; 128 &rarr; 256 &rarr; 512) &rarr; Dense(128) &rarr; Dense(10) |
-| **Parameters** | ~1.5M |
+| **Parameters** | 4,778,602 |
 | **Blocks** | 5 |
 | **Epochs** | 30 |
 
@@ -464,7 +462,7 @@ We push the depth further to see where things break. With 5 blocks, this network
 | **Name** | Wide CNN |
 | **Group** | B &mdash; CNN Exploration |
 | **Architecture** | Conv2D(128) &rarr; MaxPool &rarr; Conv2D(256) &rarr; MaxPool &rarr; Dense(256) &rarr; Dense(10) |
-| **Parameters** | ~1M |
+| **Parameters** | 1,937,674 |
 | **Filters** | [128, 256] |
 | **Epochs** | 20 |
 
@@ -491,11 +489,11 @@ Instead of stacking *more* layers (depth), we make each layer *wider* (more filt
 ![Group B Summary](results/graphs/group_b_summary.png)
 
 | Model | Params | Blocks | Accuracy | Key Finding |
-|-------|--------|--------|----------|-------------|
-| Baseline CNN | ~200K | 2 | 90.70% | Convolutions break the FC ceiling |
-| Deep CNN | ~800K | 4 | 92.37% | Depth helps incrementally |
-| Very Deep CNN | ~1.5M | 5 | 91.36% | Diminishing returns / instability |
-| Wide CNN | ~1M | 2 | 91.27% | Width is competitive with depth |
+|-------|-------:|--------|----------|-------------|
+| Baseline CNN | 225,034 | 2 | 90.70% | Convolutions break the FC ceiling |
+| Deep CNN | 1,205,866 | 4 | 92.37% | Depth helps incrementally |
+| Very Deep CNN | 4,778,602 | 5 | 91.36% | Diminishing returns / instability |
+| Wide CNN | 1,937,674 | 2 | 91.27% | Width is competitive with depth |
 
 > **Key Takeaway: CNNs dominate FC networks on image tasks. Within CNNs, both depth and width help, but there is a point of diminishing returns. Going too deep without architectural tricks (like skip connections) can actually hurt performance.**
 
@@ -518,7 +516,7 @@ These two models use the exact same convolutional architecture as Model 4 (Basel
 | **Name** | CNN + Dropout |
 | **Group** | C &mdash; Regularization Techniques |
 | **Architecture** | Conv2D(32) &rarr; MaxPool &rarr; Dropout(0.25) &rarr; Conv2D(64) &rarr; MaxPool &rarr; Dropout(0.25) &rarr; Dense(128) &rarr; Dropout(0.5) &rarr; Dense(10) |
-| **Parameters** | ~200K |
+| **Parameters** | 225,034 |
 | **Dropout Rates** | 0.25 (conv), 0.5 (dense) |
 | **Epochs** | 20 |
 
@@ -549,7 +547,7 @@ Dropout randomly "turns off" a fraction of neurons during each training step. Th
 | **Name** | CNN + BatchNorm |
 | **Group** | C &mdash; Regularization Techniques |
 | **Architecture** | Conv2D(32) &rarr; BatchNorm &rarr; MaxPool &rarr; Conv2D(64) &rarr; BatchNorm &rarr; MaxPool &rarr; Dense(128) &rarr; Dense(10) |
-| **Parameters** | ~201K |
+| **Parameters** | 225,930 |
 | **Epochs** | 20 |
 
 **Why This Model?**
@@ -577,10 +575,10 @@ Batch Normalization standardizes the inputs to each layer, keeping values in a "
 ![Group C Summary](results/graphs/group_c_summary.png)
 
 | Model | Params | Regularization | Accuracy | Key Finding |
-|-------|--------|----------------|----------|-------------|
-| Baseline CNN (ref) | ~200K | None | 90.70% | Reference point |
-| CNN + Dropout | ~200K | Dropout (0.25/0.5) | 90.87% | Smaller train-val gap |
-| CNN + BatchNorm | ~201K | BatchNorm | 89.65% | Faster convergence |
+|-------|-------:|----------------|----------|-------------|
+| Baseline CNN (ref) | 225,034 | None | 90.70% | Reference point |
+| CNN + Dropout | 225,034 | Dropout (0.25/0.5) | 90.87% | Smaller train-val gap |
+| CNN + BatchNorm | 225,930 | BatchNorm | 89.65% | Faster convergence |
 
 > **Key Takeaway: Regularization techniques do not dramatically change accuracy on this dataset, but they improve training quality. Dropout reduces overfitting; BatchNorm speeds up convergence. Both are "free" improvements you should always consider.**
 
@@ -601,7 +599,7 @@ Batch Normalization standardizes the inputs to each layer, keeping values in a "
 | **Name** | CNN + Skip Connections |
 | **Group** | D &mdash; Advanced Architecture |
 | **Architecture** | 4 Residual blocks (32 &rarr; 64 &rarr; 128 &rarr; 256) with skip connections &rarr; Dense(128) &rarr; Dense(10) |
-| **Parameters** | ~850K |
+| **Parameters** | 1,255,146 |
 | **Residual Blocks** | 4 |
 | **Epochs** | 30 |
 
@@ -642,9 +640,9 @@ The Very Deep CNN (Model 6) showed us that going deep can cause problems. Skip c
 ![Group D Summary](results/graphs/group_d_summary.png)
 
 | Model | Params | Architecture | Accuracy | Key Finding |
-|-------|--------|-------------|----------|-------------|
-| Very Deep CNN (ref) | ~1.5M | 5 blocks, no skips | 91.36% | Unstable training |
-| CNN + Skip | ~850K | 4 residual blocks | 91.90% | Stable, efficient, best performer |
+|-------|-------:|-------------|----------|-------------|
+| Very Deep CNN (ref) | 4,778,602 | 5 blocks, no skips | 91.36% | Unstable training |
+| CNN + Skip | 1,255,146 | 4 residual blocks | 91.90% | Stable, efficient, best performer |
 
 > **Key Takeaway: Skip connections are one of the most important innovations in deep learning. They let you build deeper networks without suffering from vanishing gradients. This is the principle behind ResNet, which won the 2015 ImageNet competition and revolutionized the field.**
 
@@ -687,6 +685,20 @@ The "strength" of L2 regularization is controlled by a parameter called **lambda
 | **0.1** | Strong | Aggressive &mdash; may hurt accuracy by over-constraining the weights |
 
 > **The sweet spot** is usually somewhere in the mild-to-moderate range. Too little regularization: the network overfits. Too much: it underfits (cannot learn complex patterns). This is known as the **bias-variance tradeoff**.
+
+### Loss Function Results
+
+All three loss functions were tested on the **same Baseline CNN architecture (Model 4)** with identical hyperparameters:
+
+| Loss Function | Test Accuracy | Training Time |
+|---------------|:------------:|:------------:|
+| Sparse Categorical CE | 90.70% | 213.1s |
+| Categorical CE | 90.75% | 175.5s |
+| L2 Regularized (lambda=0.001) | 90.02% | 278.5s |
+| L2 Regularized (lambda=0.01) | 89.60% | 278.5s |
+| L2 Regularized (lambda=0.1) | 87.91% | 278.5s |
+
+> **Conclusion:** Sparse CE and Categorical CE are mathematically equivalent and produce nearly identical results. L2 regularization with a small lambda has minimal effect, while a large lambda (0.1) hurts accuracy by over-constraining the weights.
 
 ---
 
@@ -749,40 +761,6 @@ This is where all 10 models meet on the same stage. Every bar, every line, and e
 
 ---
 
-## Misclassified Examples
-
-Even the best model gets some images wrong. Let us look at the failures to understand *why*.
-
-### Best Model Misclassifications
-
-![Best Model Misclassified Examples](results/graphs/misclassified_deep_cnn.png)
-
-![Best Model Confusion Matrix](results/graphs/cnn__skip_connections_confusion.png)
-
-The confusion matrix above shows, for each true class, how often the model predicted each category. A perfect model would have all numbers on the diagonal (top-left to bottom-right) and zeros everywhere else.
-
-### Worst Model Misclassifications
-
-![Worst Model Misclassified Examples](results/graphs/misclassified_fc_baseline.png)
-
-![Worst Model Confusion Matrix](results/graphs/fc_baseline_confusion.png)
-
-Compare this with the best model's confusion matrix. The FC Baseline has more "off-diagonal" numbers, meaning more frequent misclassifications, especially in the shirt/pullover/T-shirt triangle.
-
-### The "Shirt Problem" Revisited
-
-Look at the confusion matrices and find the intersection of classes 0 (T-shirt), 2 (Pullover), and 6 (Shirt). You will see a cluster of errors:
-
-| True Label | Most Common Misclassification | Why |
-|------------|-------------------------------|-----|
-| T-shirt (0) | Shirt (6) | Similar silhouette at 28x28 |
-| Pullover (2) | Coat (4) | Both have long sleeves and similar shape |
-| Shirt (6) | T-shirt (0), Coat (4) | Collar detail lost at low resolution |
-
-> **Lesson:** Some errors are not the model's fault &mdash; they are the dataset's limitation. At 28x28 pixels in grayscale, there simply is not enough visual information to distinguish a white T-shirt from a white button-up shirt. Even a human would struggle with some of these images.
-
----
-
 ## Hardware & Performance Report
 
 ### System Configuration
@@ -817,6 +795,40 @@ Look at the confusion matrices and find the intersection of classes 0 (T-shirt),
 
 ---
 
+## Misclassified Examples
+
+Even the best model gets some images wrong. Let us look at the failures to understand *why*.
+
+### Best Model Misclassifications
+
+![Best Model Misclassified Examples](results/graphs/misclassified_deep_cnn.png)
+
+![Best Model Confusion Matrix](results/graphs/cnn__skip_connections_confusion.png)
+
+The confusion matrix above shows, for each true class, how often the model predicted each category. A perfect model would have all numbers on the diagonal (top-left to bottom-right) and zeros everywhere else.
+
+### Worst Model Misclassifications
+
+![Worst Model Misclassified Examples](results/graphs/misclassified_fc_baseline.png)
+
+![Worst Model Confusion Matrix](results/graphs/fc_baseline_confusion.png)
+
+Compare this with the best model's confusion matrix. The FC Baseline has more "off-diagonal" numbers, meaning more frequent misclassifications, especially in the shirt/pullover/T-shirt triangle.
+
+### The "Shirt Problem" Revisited
+
+Look at the confusion matrices and find the intersection of classes 0 (T-shirt), 2 (Pullover), and 6 (Shirt). You will see a cluster of errors:
+
+| True Label | Most Common Misclassification | Why |
+|------------|-------------------------------|-----|
+| T-shirt (0) | Shirt (6) | Similar silhouette at 28x28 |
+| Pullover (2) | Coat (4) | Both have long sleeves and similar shape |
+| Shirt (6) | T-shirt (0), Coat (4) | Collar detail lost at low resolution |
+
+> **Lesson:** Some errors are not the model's fault &mdash; they are the dataset's limitation. At 28x28 pixels in grayscale, there simply is not enough visual information to distinguish a white T-shirt from a white button-up shirt. Even a human would struggle with some of these images.
+
+---
+
 ## "What I Learned" &mdash; Key Takeaways
 
 ### The 10 Biggest Lessons from This Study
@@ -835,7 +847,7 @@ Look at the confusion matrices and find the intersection of classes 0 (T-shirt),
 
 7. **The "Shirt Problem" is a dataset limitation, not a model failure.** At 28x28 grayscale, some clothing items are genuinely ambiguous, even to human observers.
 
-8. **More parameters != better accuracy.** The Very Deep CNN (~1.5M params) does not outperform the Skip CNN (~850K params). Efficient architecture beats brute force.
+8. **More parameters != better accuracy.** The Very Deep CNN (4.8M params) does not outperform the Deep CNN (1.2M params). Efficient architecture beats brute force.
 
 9. **Controlled experiments reveal truth.** By changing only one variable at a time (FC vs CNN, depth, width, dropout, BatchNorm, skips), we can attribute each improvement to a specific architectural choice.
 
@@ -950,12 +962,12 @@ results/
     very_deep_cnn_confusion.png
     wide_cnn_curves.png
     wide_cnn_confusion.png
-    cnn_dropout_curves.png
-    cnn_dropout_confusion.png
-    cnn_batchnorm_curves.png
-    cnn_batchnorm_confusion.png
-    cnn_skip_curves.png
-    cnn_skip_confusion.png
+    cnn__dropout_curves.png
+    cnn__dropout_confusion.png
+    cnn__batchnorm_curves.png
+    cnn__batchnorm_confusion.png
+    cnn__skip_connections_curves.png
+    cnn__skip_connections_confusion.png
     group_a_summary.png
     group_b_summary.png
     group_c_summary.png
@@ -965,7 +977,7 @@ results/
     grand_comparison_time.png
     fc_vs_cnn_comparison.png
   tables/
-    master_results.csv
+    results_summary.csv
   config/
     training_config_snapshot.yaml
 ```
@@ -1022,23 +1034,23 @@ L37/
 
 | File | Lines | Description |
 |------|------:|-------------|
-| `main.py` | 178 | Entry point: parses config, trains models, generates visuals |
-| `src/data_loader.py` | 116 | Loads Fashion-MNIST from Keras, splits 50K/10K/10K, normalizes |
+| `main.py` | 132 | Entry point: parses config, trains models, generates visuals |
+| `src/data_loader.py` | 119 | Loads Fashion-MNIST from Keras, splits 50K/10K/10K, normalizes |
 | `src/models/__init__.py` | 59 | Model registry: maps config names to builder functions |
 | `src/models/fc_models.py` | 84 | FC Baseline, Narrow Deep FC, Wide Shallow FC |
 | `src/models/cnn_models.py` | 118 | Baseline CNN, Deep CNN, Very Deep CNN, Wide CNN |
 | `src/models/regularized_models.py` | 94 | CNN + Dropout, CNN + BatchNorm |
 | `src/models/advanced_models.py` | 80 | CNN + Skip Connections (mini-ResNet) |
 | `src/training/trainer.py` | 141 | Training loop with early stopping and callbacks |
-| `src/training/loss_functions.py` | 122 | Sparse CE, Categorical CE, L2-regularized custom loss |
+| `src/training/loss_functions.py` | 105 | Sparse CE, Categorical CE, L2-regularized custom loss |
 | `src/visualization/training_plots.py` | 121 | Per-model accuracy/loss curves (dual-panel) |
 | `src/visualization/confusion_matrix.py` | 127 | Confusion matrix heatmaps with class labels |
-| `src/visualization/comparison_charts.py` | 167 | Group summaries, grand comparison, FC vs CNN charts |
+| `src/visualization/comparison_charts.py` | 109 | Group summaries, grand comparison, FC vs CNN charts |
+| `src/visualization/comparison_extra.py` | 75 | Additional comparison visualizations |
 | `src/utils/hardware.py` | 71 | GPU/CPU detection, CUDA version, memory info |
 | `src/utils/logger.py` | 128 | Timestamped logging to console and file |
 | `src/utils/paths.py` | 67 | Centralized output paths (results/, logs/, etc.) |
-| `config/training_config.yaml` | 171 | All hyperparameters in one place |
-| **Total** | **~1,844** | |
+| **Total** | **1,630** | All source files under 150-line limit |
 
 ---
 
