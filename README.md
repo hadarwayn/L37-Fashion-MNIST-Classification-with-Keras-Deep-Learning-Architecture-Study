@@ -16,6 +16,14 @@
   <img src="https://img.shields.io/badge/Dataset-Fashion--MNIST-red" alt="Fashion-MNIST"/>
 </p>
 
+<p align="center">
+  <a href="https://colab.research.google.com/github/hadarwayn/L37-Fashion-MNIST-Classification-with-Keras-Deep-Learning-Architecture-Study/blob/main/notebooks/L37_Fashion_MNIST_Architecture_Study.ipynb">
+    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab" height="28"/>
+  </a>
+</p>
+
+> **Run it now!** Click the badge above to open the full interactive notebook in Google Colab &mdash; no setup required. Select **Runtime &rarr; Change runtime type &rarr; T4 GPU** for 10-50x faster training.
+
 ---
 
 ## Abstract
@@ -791,21 +799,21 @@ Look at the confusion matrices and find the intersection of classes 0 (T-shirt),
 
 ### Training Time Breakdown
 
-| Model | Parameters | Expected Time (GPU) | Expected Time (CPU) |
-|-------|-----------|--------------------:|--------------------:|
-| FC Baseline | ~101K | ~30s | ~2 min |
-| Narrow Deep FC | ~57K | ~30s | ~2 min |
-| Wide Shallow FC | ~406K | ~35s | ~3 min |
-| Baseline CNN | ~200K | ~60s | ~8 min |
-| Deep CNN | ~800K | ~120s | ~15 min |
-| Very Deep CNN | ~1.5M | ~180s | ~25 min |
-| Wide CNN | ~1M | ~90s | ~12 min |
-| CNN + Dropout | ~200K | ~65s | ~8 min |
-| CNN + BatchNorm | ~201K | ~70s | ~9 min |
-| CNN + Skip | ~850K | ~150s | ~20 min |
-| **Total** | | **~15 min** | **~1.5 hrs** |
+| Model | Parameters | Local CPU Time | Colab T4 GPU (est.) |
+|-------|-----------|---------------:|--------------------:|
+| FC Baseline | 101,770 | 77.9s | ~10s |
+| Narrow Deep FC | 59,210 | 65.9s | ~10s |
+| Wide Shallow FC | 407,050 | 129.1s | ~15s |
+| Baseline CNN | 225,034 | 198.5s | ~25s |
+| Deep CNN | 1,205,866 | 736.7s | ~60s |
+| Very Deep CNN | 4,778,602 | 6,576.2s (~1h50m) | ~180s |
+| Wide CNN | 1,937,674 | 648.6s | ~50s |
+| CNN + Dropout | 225,034 | 399.2s | ~35s |
+| CNN + BatchNorm | 225,930 | 248.7s | ~25s |
+| CNN + Skip | 1,255,146 | 14,750.8s (~4h6m) | ~120s |
+| **Total** | | **~6h37m** | **~10 min** |
 
-> *Times are estimates. Actual times depend on hardware, batch size, and early stopping.*
+> **Local times** are actual measurements on an Intel 13th Gen CPU (no GPU). **Colab GPU times** are estimates for a T4 GPU &mdash; run the notebook in Colab to get exact measurements. GPU acceleration provides roughly 10-50x speedup depending on model complexity.
 
 ---
 
@@ -853,7 +861,12 @@ Look at the confusion matrices and find the intersection of classes 0 (T-shirt),
 
 ### Option A: Google Colab (One-Click, No Setup)
 
-> Coming soon. Upload the notebook from `notebooks/` to Google Colab and run all cells.
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/hadarwayn/L37-Fashion-MNIST-Classification-with-Keras-Deep-Learning-Architecture-Study/blob/main/notebooks/L37_Fashion_MNIST_Architecture_Study.ipynb)
+
+1. Click the badge above to open the notebook in Google Colab
+2. Go to **Runtime &rarr; Change runtime type** and select **T4 GPU**
+3. Run all cells (**Runtime &rarr; Run all**)
+4. The notebook is fully self-contained &mdash; all data loading, model building, training, and visualization happens inline
 
 ### Option B: Local Setup with UV (Recommended)
 
